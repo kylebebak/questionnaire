@@ -133,10 +133,11 @@ class Questionnaire:
             return False
         return True
 
-    def add_question(self, question):
+    def add_question(self, key, options, multiple=False, condition={}):
         """Add a Question instance to the questions dict. Each key points
         to a list of Question instances with that key.
         """
+        question = Question(key, options, multiple, condition)
         self.questions.setdefault(question.key, []).append(question)
 
     def which_question(self, key):

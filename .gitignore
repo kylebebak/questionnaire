@@ -8,6 +8,7 @@ venv/
 __pycache__/
 *.so
 *~
+MANIFEST
 
 # due to using tox and pytest
 .tox
