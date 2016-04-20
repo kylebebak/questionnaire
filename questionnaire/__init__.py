@@ -7,28 +7,26 @@ import inspect
 from pick import Picker
 
 
-def back_pick(_options, prompt="Pick: ", indicator='=>'):
+def back_pick(_options, prompt, *args, **kwargs):
     """Instantiates a picker, registers custom handlers for going back,
     and starts the picker.
     """
     def go_back(picker):
         return None, -1
 
-    picker = Picker(_options, title=prompt, indicator=indicator)
+    picker = Picker(_options, title=prompt, indicator='=>')
     picker.register_custom_handler(ord('h'), go_back)
     picker.register_custom_handler(curses.KEY_LEFT, go_back)
     return picker.start()
 
 
-def back_pick_multiple(_options, prompt="Pick multiple: ", indicator='=>',
-                       ALL="all", DONE="done..."):
+def back_pick_multiple(_options, prompt, ALL="all", DONE="done..."):
     """Calls `pick` in a while loop to allow user to pick multiple
     options. Returns a list of chosen options.
     """
     _options, options = [ALL] + _options + [DONE], []
     while True:
-        option, i = back_pick(_options, '{}{}'.format(prompt, options),
-                              indicator=indicator)
+        option, i = back_pick(_options, '{}{}'.format(prompt, options))
         if i < 0: # user went back
             return options, i
         if option == ALL:
@@ -97,9 +95,11 @@ class Questionnaire:
     """Class with methods for adding questions to a questionnaire,
     and running the questionnaire.
     """
-    def __init__(self):
+    def __init__(self, multi_all="all", multi_done="done..."):
         self.questions = OrderedDict() # key -> list of Question instances
         self.choices = OrderedDict() # key -> option(s)
+        self.multi_all = multi_all
+        self.multi_done = multi_done
 
     def show_choices(self, s=""):
         """Helper method for displaying the choices made so far.
@@ -116,7 +116,7 @@ class Questionnaire:
         N = max(len(self.choices)-n-1, 0)
         self.choices = OrderedDict(islice(self.choices.items(), N))
 
-    def prompt(self, key, options, prompt="", multiple=False, indicator='=>'):
+    def prompt(self, key, options, prompt="", multiple=False):
         """Interactive prompt allowing user to choose option(s) from a list
         using the arrow keys to navigate.
         """
@@ -124,7 +124,7 @@ class Questionnaire:
         _pick = back_pick_multiple if multiple else back_pick
         self.choices[key], i = \
             _pick(options, self.show_choices() + "\n{}".format(prompt),
-                  indicator=indicator)
+                  self.multi_all, self.multi_done)
         if i < 0: # user went back
             if multiple:
                 self.go_back(0) if self.choices[key] else self.go_back(1)
@@ -133,11 +133,11 @@ class Questionnaire:
             return False
         return True
 
-    def add_question(self, key, options, multiple=False, condition={}):
+    def add_question(self, *args, **kwargs):
         """Add a Question instance to the questions dict. Each key points
         to a list of Question instances with that key.
         """
-        question = Question(key, options, multiple, condition)
+        question = Question(*args, **kwargs)
         self.questions.setdefault(question.key, []).append(question)
 
     def which_question(self, key):
