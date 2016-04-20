@@ -2,6 +2,7 @@ from collections import OrderedDict
 from itertools import islice
 import operator
 import curses
+import inspect
 
 from pick import Picker
 
@@ -51,7 +52,16 @@ class Condition:
         }
 
     def get_operator(op):
-        return Condition._OPERATORS[op]
+        return Condition._OPERATORS[op] if op in Condition._OPERATORS else op
+
+    def check_operator(op):
+        if op in Condition._OPERATORS:
+            return True
+        try:
+            n_args = len(inspect.getargspec(op)[0])
+            return n_args == 2
+        except:
+            return False
 
     def __init__(self, condition):
         self._keys = condition['keys']
@@ -62,10 +72,10 @@ class Condition:
         vars = [self._keys, self._vals, self._operators]
 
         assert all(type(var) == list for var in vars), \
-            "All properties must be lists"
+            "All condition properties must be lists"
         assert all(len(var) == len(vars[0]) for var in vars), \
-            "All properties must have the same length"
-        assert all(o in Condition._OPERATORS for o in self._operators), \
+            "All condition properties must have the same length"
+        assert all(Condition.check_operator(op) for op in self._operators), \
             "Condition has invalid operator(s)"
 
     def keys(self):
