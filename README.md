@@ -10,7 +10,7 @@ Finally, users can use <kbd>&larr;</kbd> or <kbd>h</kbd> to go back in a questio
 
 ## Installation
 ```sh
-pip install py-geohash-any
+pip install questionnaire
 ```
 
 ## Examples
