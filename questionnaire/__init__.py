@@ -37,6 +37,14 @@ def back_pick_multiple(_options, prompt, ALL="all", DONE="done..."):
         _options.remove(option)
 
 
+def back_input(prompt, back_string="<"):
+    """Calls input to allow user to input an arbitrary string. User
+    can go back by entering an empty string.
+    """
+    answer = input(prompt)
+    return answer, -1 if answer == back_string else answer, 0
+
+
 class Condition:
     """Container for condition properties.
     """
@@ -49,13 +57,11 @@ class Condition:
         '>=' : operator.ge,
         }
 
-    def __init__(self, condition):
-        self.keys = condition['keys']
-        self.vals = condition['vals']
-        if 'operators' in condition:
-            self.operators = condition['operators']
-        else:
-            self.operators = ['==']*len(self.keys)
+    def __init__(self, keys=[], vals=[], operators=[]):
+        self.keys = list(keys)
+        self.vals = list(vals)
+        self.operators = list(operators) if operators \
+            else ['==']*len(self.keys)
 
         vars = [self.keys, self.vals, self.operators]
         assert all(type(var) == list for var in vars), \
@@ -81,12 +87,12 @@ class Condition:
 class Question:
     """Container for question properties.
     """
-    def __init__(self, key, options, multiple=False, condition={}):
+    def __init__(self, key, options, multiple=False, **kwargs):
         self.key = key
-        self.options = options
+        self.options = list(options)
         self.multiple = multiple
-        if 'keys' in condition and 'vals' in condition:
-            self.condition = Condition(condition)
+        if 'keys' in kwargs and 'vals' in kwargs:
+            self.condition = Condition(**kwargs)
         else:
             self.condition = None
 
@@ -95,11 +101,12 @@ class Questionnaire:
     """Class with methods for adding questions to a questionnaire,
     and running the questionnaire.
     """
-    def __init__(self, multi_all="all", multi_done="done..."):
+    def __init__(self, multi_all="all", multi_done="done...", back_string="<"):
         self.questions = OrderedDict() # key -> list of Question instances
         self.choices = OrderedDict() # key -> option(s)
         self.multi_all = multi_all
         self.multi_done = multi_done
+        self.back_string = back_string
 
     def show_choices(self, s=""):
         """Helper method for displaying the choices made so far.

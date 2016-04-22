@@ -32,30 +32,30 @@ q.add_question('env', ENVS)
 q.add_question('kind', KINDS)
 # playbook
 q.add_question('playbook', DEPLOY_PLAYBOOKS,
-    condition={'keys': ['kind'], 'vals': ['deploy']})
+    keys=['kind'], vals=['deploy'])
 q.add_question('playbook', SERVICE_PLAYBOOKS,
-    condition={'keys': ['kind'], 'vals': ['service']})
+    keys=['kind'], vals=['service'])
 # tags
 q.add_question('tags', DEPLOY_PLAYBOOK_TAGS, multiple=True,
-    condition={'keys': ['kind', 'playbook'], 'vals': ['deploy', 'deploy']})
+    keys=['kind', 'playbook'], vals=['deploy', 'deploy'])
 q.add_question('tags', DEPLOY_ROLE_TAGS, multiple=True,
-    condition={'keys': ['kind'], 'vals': ['deploy']})
+    keys=['kind'], vals=['deploy'])
 q.add_question('tags', SERVICE_PLAYBOOK_TAGS, multiple=True,
-    condition={'keys': ['kind', 'playbook'], 'vals': ['service', 'service']})
+    keys=['kind', 'playbook'], vals=['service', 'service'])
 q.add_question('tags', [], multiple=True,
-    condition={'keys': ['kind'], 'vals': ['service']})
+    keys=['kind'], vals=['service'])
 # action
 q.add_question('action', SERVICE_ACTIONS,
-    condition={'keys': ['kind'], 'vals': ['service']})
+    keys=['kind'], vals=['service'])
 # services
 q.add_question('services', [], multiple=True,
-    condition={'keys': ['kind', 'playbook'], 'vals': ['service', 'service']})
+    keys=['kind', 'playbook'], vals=['service', 'service'])
 q.add_question('services', SERVICES_DEV, multiple=True,
-    condition={'keys': ['kind', 'env'], 'vals': ['service', 'development']})
+    keys=['kind', 'env'], vals=['service', 'development'])
 q.add_question('services', SERVICES_STG, multiple=True,
-    condition={'keys': ['kind', 'env'], 'vals': ['service', 'staging']})
+    keys=['kind', 'env'], vals=['service', 'staging'])
 q.add_question('services', SERVICES_PRD, multiple=True,
-    condition={'keys': ['kind', 'env'], 'vals': ['service', 'production']})
+    keys=['kind', 'env'], vals=['service', 'production'])
 
 choices = q.run()
 print(choices)
