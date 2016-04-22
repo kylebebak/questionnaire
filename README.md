@@ -35,11 +35,11 @@ If you want to allow the user to pick multiple options for a single question, pa
 ## Conditional Questions
 If you add questions with the same key to a questionnaire, the conditions assigned to the questions will determine which one is presented to the user. __questionnaire__ will iterate through the questions in the order in which they were added, __and will present the first question for which the condition is satisfied, or for which there is no condition__. If none of the questions for a key has a condition that is satisfied, then all questions for this key are skipped.
 
-A condition can optionally be passed to `add_question` as a dict. The keys of the condition dict are `keys`, `vals`, and `operators`. These keys must point to lists that have the same length. If the condition dict is passed, `keys` and `vals` must be defined, while `operators` is optional. \*\*
+A condition can optionally be passed to `add_question` as a dict. The keys of the condition dict are `keys`, `vals`, and `operators`. These keys must point to lists that have the same length. If the condition dict is passed, `keys` and `vals` must be defined, while `operators` is optional. __\*\*__
 
 Each key in the `keys` list must point to the name of a previously answered question in the questionnaire. In a condition, the __answers__ get compared with their corresponding __vals__, and if their relationships are all `True` under the corresponding __operators__, the condition is satisfied. This might sound a bit tricky, but it's surprisingly flexible and simple. If in doubt, seriously, check out the client!
 
-\*\* The default operator is `==`. The following operators can be passed as strings: `==`, `!=`, `<=`, `>=`, `in`, `not in`. If you want to define your own operators, make sure they are functions that accept two values and return a boolean.
+__\*\*__ The default operator is `==`. The following operators can be passed as strings: `==`, `!=`, `<=`, `>=`, `in`, `not in`. If you want to define your own operators, make sure they are functions that accept two values and return a boolean. Hint: use lambda functions.
 
 ## Tests
 Not yet...

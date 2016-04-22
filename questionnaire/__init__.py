@@ -41,25 +41,13 @@ class Condition:
     """Container for condition properties.
     """
     OPERATORS = {
-        '=='     : operator.eq,
-        '!='     : operator.ne,
-        '<='     : operator.le,
-        '>='     : operator.ge,
-        'in'     : lambda x, y: x in y,
-        'not in' : lambda x, y: x not in y
+        '==' : operator.eq,
+        '!=' : operator.ne,
+        '>'  : operator.lt,
+        '<'  : operator.gt,
+        '<=' : operator.le,
+        '>=' : operator.ge,
         }
-
-    def get_operator(op):
-        return Condition.OPERATORS[op] if op in Condition.OPERATORS else op
-
-    def check_operator(op):
-        if op in Condition.OPERATORS:
-            return True
-        try:
-            n_args = len(inspect.getargspec(op)[0])
-            return n_args == 2
-        except:
-            return False
 
     def __init__(self, condition):
         self.keys = condition['keys']
@@ -74,8 +62,20 @@ class Condition:
             "All condition properties must be lists"
         assert all(len(var) == len(vars[0]) for var in vars), \
             "All condition properties must have the same length"
-        assert all(Condition.check_operator(op) for op in self.operators), \
-            "Condition has invalid operator(s)"
+        self.assign_operators()
+
+    def assign_operators(self):
+        for i, op in enumerate(self.operators):
+            if op in Condition.OPERATORS:
+                self.operators[i] = Condition.OPERATORS[op]
+                continue
+            try:
+                n_args = len(inspect.getargspec(op)[0])
+                return n_args == 2
+            except:
+                print("Condition has invalid operator(s). Operators must " \
+                "accept two args. Hint: to define your own, use lamdbas")
+                raise
 
 
 class Question:
@@ -158,7 +158,7 @@ class Questionnaire:
             return True
         for key, val, op in \
             zip(condition.keys, condition.vals, condition.operators):
-            if not Condition.get_operator(op)(val, self.choices[key]):
+            if not op(self.choices[key], val):
                 return False
         return True
 
