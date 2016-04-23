@@ -1,11 +1,12 @@
-"""All prompters registered in this module must return an (answer, back)
-tuple, even if a back event doesn't occur. If the value for back is an
-int, the questionnaire will move back that number of questions.
+"""All prompters registered in this module must have a function signature
+of (prompt="", **kwargs), and must return an (answer, back) tuple, even if
+a back event doesn't occur. If the value for back is an int, the
+questionnaire will go back that number of questions.
 
-Extending questionnaire is as simple as defining a valid prompter in this
-module and decorating it with @register.
+Extending questionnaire is as simple writing your own prompter and passing
+it to `add_question`.
 """
-
+import sys
 import curses
 
 from pick import Picker
@@ -64,13 +65,14 @@ def multiple(prompt="", **kwargs):
 @register(key="raw")
 def raw(prompt="", **kwargs):
     """Calls input to allow user to input an arbitrary string. User can go
-    back by entering the `go_back` string.
+    back by entering the `go_back` string. Works in both Python 2 and 3.
     """
     go_back = kwargs["go_back"] if "go_back" in kwargs else "<"
     type_ = kwargs["type"] if "type" in kwargs else str
     while True:
         try:
-            answer = input(prompt)
+            answer = eval('raw_input(prompt)') if sys.version_info < (3, 0) \
+                                               else eval('input(prompt)')
             return (answer, 1) if answer == go_back else (type_(answer), None)
         except ValueError:
-            print("`{}` is not a valid `{}`".format(answer, type_))
+            print("\n`{}` is not a valid `{}`\n".format(answer, type_))

@@ -59,5 +59,5 @@ q.add_question('services', prompter="multiple", options=SERVICES_STG).\
 q.add_question('services', prompter="multiple", options=SERVICES_PRD).\
     add_condition(keys=['kind', 'env'], vals=['service', 'production'])
 
-choices = q.run()
-print(choices)
+answers = q.run()
+print(answers)

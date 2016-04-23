@@ -48,16 +48,32 @@ class Condition:
 
 
 class Question:
-    """Container for question properties. The key looks up the prompter in the
-    prompters registry. Additional keyword args are passed along to prompter.
+    """Container for question properties. A string key will look up the
+    prompter in the core prompters registry, or you can pass your own
+    prompter method that conforms to the prompter API.
     """
     def __init__(self, key, prompter="single", prompt="", **prompter_args):
         self.key = key
         self.condition = None
-
-        assert prompter in prompters, "This prompter doesn't exist"
-        self.prompter = prompters[prompter]
+        self.assign_prompter(prompter)
+        self.assign_prompt(prompt)
         self.prompter_args = prompter_args
+
+    def assign_prompter(self, prompter):
+        """If you want to change the core prompters registry, you can
+        override this method in a Question subclass.
+        """
+        if type(prompter) is str:
+            assert prompter in prompters, "This is not a core prompter"
+            self.prompter = prompters[prompter]
+        else:
+            self.prompter = prompter
+
+    def assign_prompt(self, prompt):
+        self.prompt = prompt.strip() + " " if prompt \
+                                           else "{}: ".format(self.key)
+
+
 
     def run_prompter(self):
         self.prompter(self.prompter_args)
@@ -88,9 +104,14 @@ class Questionnaire:
 
     def add_question(self, *args, **kwargs):
         """Add a Question instance to the questions dict. Each key points
-        to a list of Question instances with that key.
+        to a list of Question instances with that key. Use the `question`
+        kwarg to pass a Question instance if you want, or pass in the same
+        args you would pass to instantiate a question.
         """
-        question = Question(*args, **kwargs)
+        if "question" in kwargs and isinstance(kwargs["question"], Question):
+            question = kwargs["question"]
+        else:
+            question = Question(*args, **kwargs)
         self.questions.setdefault(question.key, []).append(question)
         return question
 
@@ -118,9 +139,9 @@ class Questionnaire:
     def ask_question(self, q):
         """Call the question's prompter, and check to see if user goes back.
         """
-        prompt = q.prompt if hasattr(q, 'prompt') else "{}: ".format(q.key)
-        if self.show_answers:
-            prompt = self.show_answers() + "\n{}".format(prompt)
+        prompt = q.prompt
+        if self._show_answers:
+            prompt = self.show_answers() + "\n{}".format(q.prompt)
 
         self.answers[q.key], back = q.prompter(prompt, **q.prompter_args)
         if back is not None:

@@ -17,5 +17,5 @@ q.add_question('todo', prompter="multiple", options=['eat tostadas', 'go to the 
 
 q.add_question('age', prompter="raw", prompt='how old are you?', type=int)
 
-choices = q.run()
-print(choices)
+answers = q.run()
+print(answers)
