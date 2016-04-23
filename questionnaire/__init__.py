@@ -1,48 +1,9 @@
 from collections import OrderedDict
 from itertools import islice
 import operator
-import curses
 import inspect
 
-from pick import Picker
-
-
-def back_pick(_options, prompt, *args, **kwargs):
-    """Instantiates a picker, registers custom handlers for going back,
-    and starts the picker.
-    """
-    def go_back(picker):
-        return None, -1
-
-    picker = Picker(_options, title=prompt, indicator='=>')
-    picker.register_custom_handler(ord('h'), go_back)
-    picker.register_custom_handler(curses.KEY_LEFT, go_back)
-    return picker.start()
-
-
-def back_pick_multiple(_options, prompt, ALL="all", DONE="done..."):
-    """Calls `pick` in a while loop to allow user to pick multiple
-    options. Returns a list of chosen options.
-    """
-    _options, options = [ALL] + _options + [DONE], []
-    while True:
-        option, i = back_pick(_options, '{}{}'.format(prompt, options))
-        if i < 0: # user went back
-            return options, i
-        if option == ALL:
-            return ([ALL], i)
-        if option == DONE:
-            return (options, i)
-        options.append(option)
-        _options.remove(option)
-
-
-def back_input(prompt, back_string="<"):
-    """Calls input to allow user to input an arbitrary string. User
-    can go back by entering an empty string.
-    """
-    answer = input(prompt)
-    return answer, -1 if answer == back_string else answer, 0
+from .prompters import prompters
 
 
 class Condition:
@@ -71,6 +32,8 @@ class Condition:
         self.assign_operators()
 
     def assign_operators(self):
+        """Assigns function to the operators property of the instance.
+        """
         for i, op in enumerate(self.operators):
             if op in Condition.OPERATORS:
                 self.operators[i] = Condition.OPERATORS[op]
@@ -85,28 +48,35 @@ class Condition:
 
 
 class Question:
-    """Container for question properties.
+    """Container for question properties. The key looks up the prompter in the
+    prompters registry. Additional keyword args are passed along to prompter.
     """
-    def __init__(self, key, options, multiple=False, **kwargs):
+    def __init__(self, key, prompter="single", prompt="", **prompter_args):
         self.key = key
-        self.options = list(options)
-        self.multiple = multiple
+        self.condition = None
+
+        assert prompter in prompters, "This prompter doesn't exist"
+        self.prompter = prompters[prompter]
+        self.prompter_args = prompter_args
+
+    def run_prompter(self):
+        self.prompter(self.prompter_args)
+
+    def add_condition(self, **kwargs):
         if 'keys' in kwargs and 'vals' in kwargs:
             self.condition = Condition(**kwargs)
-        else:
-            self.condition = None
+        return self.condition
 
 
 class Questionnaire:
-    """Class with methods for adding questions to a questionnaire,
-    and running the questionnaire.
+    """Class with methods for adding questions to a questionnaire, and running
+    the questionnaire. Additional keyword args are passed any prompter method
+    when it is called.
     """
-    def __init__(self, multi_all="all", multi_done="done...", back_string="<"):
+    def __init__(self, show_choices=True):
         self.questions = OrderedDict() # key -> list of Question instances
         self.choices = OrderedDict() # key -> option(s)
-        self.multi_all = multi_all
-        self.multi_done = multi_done
-        self.back_string = back_string
+        self._show_choices = show_choices
 
     def show_choices(self, s=""):
         """Helper method for displaying the choices made so far.
@@ -116,36 +86,48 @@ class Questionnaire:
             s += "{:>{}} : {}\n".format(key, padding, self.choices[key])
         return s
 
-    def go_back(self, n=1):
-        """Move `n` questions back in the questionnaire, and remove
-        the last `n` choices.
-        """
-        N = max(len(self.choices)-n-1, 0)
-        self.choices = OrderedDict(islice(self.choices.items(), N))
-
-    def prompt(self, key, options, prompt="", multiple=False):
-        """Interactive prompt allowing user to choose option(s) from a list
-        using the arrow keys to navigate.
-        """
-        prompt = prompt if prompt else "{}: ".format(key)
-        _pick = back_pick_multiple if multiple else back_pick
-        self.choices[key], i = \
-            _pick(options, self.show_choices() + "\n{}".format(prompt),
-                  self.multi_all, self.multi_done)
-        if i < 0: # user went back
-            if multiple:
-                self.go_back(0) if self.choices[key] else self.go_back(1)
-            else:
-                self.go_back(1)
-            return False
-        return True
-
     def add_question(self, *args, **kwargs):
         """Add a Question instance to the questions dict. Each key points
         to a list of Question instances with that key.
         """
         question = Question(*args, **kwargs)
         self.questions.setdefault(question.key, []).append(question)
+        return question
+
+    def run(self):
+        """Prompt the user to choose one or more options for each question
+        in the questionnaire, and return the choices.
+        """
+        self.choices = OrderedDict() # reset choices
+        while True:
+            if not self.ask_questions():
+                continue
+            return dict(self.choices)
+
+    def ask_questions(self):
+        """Helper that asks questions in questionnaire, and returns
+        False if user "goes back".
+        """
+        for key in self.questions.keys():
+            question = self.which_question(key)
+            if question is not None and key not in self.choices:
+                if not self.ask_question(question):
+                    return False
+        return True
+
+    # def prompt(self, key, options, prompt="", kind="single"):
+    def ask_question(self, q):
+        """Call the question's prompter, and check to see if user goes back.
+        """
+        prompt = q.prompt if hasattr(q, 'prompt') else "{}: ".format(q.key)
+        if self.show_choices:
+            prompt = self.show_choices() + "\n{}".format(prompt)
+
+        self.choices[q.key], back = q.prompter(prompt, **q.prompter_args)
+        if back is not None:
+            self.go_back(abs(int(back)))
+            return False
+        return True
 
     def which_question(self, key):
         """Decide which Question instance to select from the list of questions
@@ -169,24 +151,9 @@ class Questionnaire:
                 return False
         return True
 
-    def run(self):
-        """Prompt the user to choose one or more options for each question
-        in the questionnaire, and return the choices.
+    def go_back(self, n=1):
+        """Move `n` questions back in the questionnaire, and remove
+        the last `n` choices.
         """
-        self.choices = OrderedDict() # reset choices
-        while True:
-            if not self.ask_questions():
-                continue
-            return dict(self.choices)
-
-    def ask_questions(self):
-        """Helper that asks questions in questionnaire, and returns
-        False if user "goes back".
-        """
-        for key in self.questions.keys():
-            question = self.which_question(key)
-            if question is not None and key not in self.choices:
-                if not self.prompt(key, question.options,
-                        multiple=question.multiple):
-                    return False
-        return True
+        N = max(len(self.choices)-n-1, 0)
+        self.choices = OrderedDict(islice(self.choices.items(), N))
