@@ -39,7 +39,7 @@ q.add_question('todo', prompter="multiple", options=['eat tostadas', 'go to the 
     add_condition(keys=['day', 'time'], vals=[('friday', 'saturday'), ('evening', 'night')], operators=[lambda x, y: x in y]*2)
 # monday night is skipped
 
-q.add_question('age', 'how old are you?', prompter="raw", type="int")
+q.add_question('age', prompter="raw", prompt='how old are you?', type=int)
 
 choices = q.run()
 ~~~

@@ -1,20 +1,14 @@
-import os
 from setuptools import setup
-
-def fread(fname):
-    filepath = os.path.join(os.path.dirname(__file__), fname)
-    with open(filepath, 'r') as fp:
-        return fp.read()
 
 setup(
     name='questionnaire',
-    version='0.5.0',
-    description='Uses https://github.com/wong2/pick to prompt user to fill' \
-                ' out a questionnaire, and returns the results as a dict',
-    long_description=fread('README.md'),
-    keywords='terminal gui pick',
+    version='1.0.0',
+    description='Prompts a user to answer a series of questions. At the end of'\
+                ' the questionnaire it returns the answers as a `key -> answer`'\
+                ' OrderedDict',
+    keywords='terminal gui pick question',
     url='https://github.com/kylebebak/questionnaire',
-    download_url = 'https://github.com/kylebebak/questionnaire/tarball/0.5.0',
+    download_url = 'https://github.com/kylebebak/questionnaire/tarball/1.0.0',
     author='kylebebak',
     author_email='kylebebak@gmail.com',
     license='MIT',
