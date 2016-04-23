@@ -1,6 +1,9 @@
 """All prompters registered in this module must return an (answer, back)
 tuple, even if a back event doesn't occur. If the value for back is an
 int, the questionnaire will move back that number of questions.
+
+Extending questionnaire is as simple as defining a valid prompter in this
+module and decorating it with @register.
 """
 
 import curses
@@ -61,13 +64,13 @@ def multiple(prompt="", **kwargs):
 @register(key="raw")
 def raw(prompt="", **kwargs):
     """Calls input to allow user to input an arbitrary string. User can go
-    back by entering an empty string.
+    back by entering the `go_back` string.
     """
     go_back = kwargs["go_back"] if "go_back" in kwargs else "<"
-    type_ = kwargs["type"] if "type" in kwargs else "<"
+    type_ = kwargs["type"] if "type" in kwargs else str
     while True:
         try:
             answer = input(prompt)
             return (answer, 1) if answer == go_back else (type_(answer), None)
-        except ValueError as e:
-            print(e)
+        except ValueError:
+            print("`{}` is not a valid `{}`".format(answer, type_))

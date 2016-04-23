@@ -3,21 +3,7 @@ be passed to another program to build a valid `ansible-playbook` command.
 """
 from questionnaire import Questionnaire
 
-# env
-ENVS = ['development', 'staging', 'production']
-# kind
-KINDS = ['deploy', 'service']
-# playbook
-DEPLOY_PLAYBOOKS = ['deploy', 'backend', 'create_user', 'database', 'message', 'webserver']
-SERVICE_PLAYBOOKS = ['service', 'backend', 'database', 'message', 'webserver']
-# tags
-DEPLOY_PLAYBOOK_TAGS = ['backend', 'create_user', 'database', 'message', 'webserver']
-DEPLOY_ROLE_TAGS = ['clone_repo', 'createsuperuser', 'django', 'env_vars', 'fixtures', 'iptables', 'logrotate',
-    'migrate', 'nginx', 'node', 'postgresql', 'redis', 'upstart', 'vagrant', 'virtualenv']
-SERVICE_PLAYBOOK_TAGS = ['backend', 'database', 'message', 'webserver']
-# action
-SERVICE_ACTIONS = ['started', 'stopped', 'restarted', 'reloaded']
-# services
+
 SERVICES_INITD = ['redis_6379', 'postgresql', 'nginx', 'firewall']
 SERVICES_UPSTART = ['gunicorn', 'celery-worker', 'celery-beat', 'celery-flower']
 SERVICES_DEV = SERVICES_INITD + [s + "-development" for s in SERVICES_UPSTART]
@@ -26,36 +12,52 @@ SERVICES_PRD = SERVICES_INITD + [s + "-production" for s in SERVICES_UPSTART]
 
 q = Questionnaire()
 
-# env
-q.add_question('env', ENVS)
-# kind
-q.add_question('kind', KINDS)
-# playbook
-q.add_question('playbook', DEPLOY_PLAYBOOKS,
-    keys=['kind'], vals=['deploy'])
-q.add_question('playbook', SERVICE_PLAYBOOKS,
-    keys=['kind'], vals=['service'])
-# tags
-q.add_question('tags', DEPLOY_PLAYBOOK_TAGS, multiple=True,
-    keys=['kind', 'playbook'], vals=['deploy', 'deploy'])
-q.add_question('tags', DEPLOY_ROLE_TAGS, multiple=True,
-    keys=['kind'], vals=['deploy'])
-q.add_question('tags', SERVICE_PLAYBOOK_TAGS, multiple=True,
-    keys=['kind', 'playbook'], vals=['service', 'service'])
-q.add_question('tags', [], multiple=True,
-    keys=['kind'], vals=['service'])
-# action
-q.add_question('action', SERVICE_ACTIONS,
-    keys=['kind'], vals=['service'])
-# services
-q.add_question('services', [], multiple=True,
-    keys=['kind', 'playbook'], vals=['service', 'service'])
-q.add_question('services', SERVICES_DEV, multiple=True,
-    keys=['kind', 'env'], vals=['service', 'development'])
-q.add_question('services', SERVICES_STG, multiple=True,
-    keys=['kind', 'env'], vals=['service', 'staging'])
-q.add_question('services', SERVICES_PRD, multiple=True,
-    keys=['kind', 'env'], vals=['service', 'production'])
+# ENV
+q.add_question('env', options=['development', 'staging', 'production'])
+
+# KIND
+q.add_question('kind', options=['deploy', 'service'])
+
+# PLAYBOOK
+q.add_question('playbook', options=['deploy', 'backend', 'create_user', 'database', 'message', 'webserver']).\
+    add_condition(keys=['kind'], vals=['deploy'])
+
+q.add_question('playbook', options=['service', 'backend', 'database', 'message', 'webserver']).\
+    add_condition(keys=['kind'], vals=['service'])
+
+# TAGS
+q.add_question('tags', prompter="multiple", options=['backend', 'create_user', 'database', 'message', 'webserver']).\
+    add_condition(keys=['kind', 'playbook'], vals=['deploy', 'deploy'])
+
+q.add_question('tags', prompter="multiple",
+    options=['clone_repo', 'createsuperuser', 'django', 'env_vars', 'fixtures',
+             'iptables', 'logrotate', 'migrate', 'nginx', 'node', 'postgresql',
+             'redis', 'upstart', 'vagrant', 'virtualenv']).\
+    add_condition(keys=['kind'], vals=['deploy'])
+
+q.add_question('tags', prompter="multiple", options=['backend', 'database', 'message', 'webserver']).\
+    add_condition(keys=['kind', 'playbook'], vals=['service', 'service'])
+
+q.add_question('tags', prompter="multiple", options=[]).\
+    add_condition(keys=['kind'], vals=['service'])
+
+# BRANCH
+q.add_question('branch', prompter="raw").add_condition(keys=['kind'], vals=['deploy'])
+
+# ACTION
+q.add_question('action', options=['started', 'stopped', 'restarted', 'reloaded']).\
+    add_condition(keys=['kind'], vals=['service'])
+
+# SERVICES
+q.add_question('services', prompter="multiple", options=[]).\
+    add_condition(keys=['kind', 'playbook'], vals=['service', 'service'])
+
+q.add_question('services', prompter="multiple", options=SERVICES_DEV).\
+    add_condition(keys=['kind', 'env'], vals=['service', 'development'])
+q.add_question('services', prompter="multiple", options=SERVICES_STG).\
+    add_condition(keys=['kind', 'env'], vals=['service', 'staging'])
+q.add_question('services', prompter="multiple", options=SERVICES_PRD).\
+    add_condition(keys=['kind', 'env'], vals=['service', 'production'])
 
 choices = q.run()
 print(choices)

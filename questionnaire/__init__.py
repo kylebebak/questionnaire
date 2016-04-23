@@ -70,20 +70,20 @@ class Question:
 
 class Questionnaire:
     """Class with methods for adding questions to a questionnaire, and running
-    the questionnaire. Additional keyword args are passed any prompter method
-    when it is called.
+    the questionnaire. Additional keyword args are passed to the prompter
+    method when it is called.
     """
-    def __init__(self, show_choices=True):
+    def __init__(self, show_answers=True):
         self.questions = OrderedDict() # key -> list of Question instances
-        self.choices = OrderedDict() # key -> option(s)
-        self._show_choices = show_choices
+        self.answers = OrderedDict() # key -> answer
+        self._show_answers = show_answers
 
-    def show_choices(self, s=""):
-        """Helper method for displaying the choices made so far.
+    def show_answers(self, s=""):
+        """Helper method for displaying the answers so far.
         """
         padding = len(max(self.questions.keys(), key=len)) + 5
-        for key in list(self.choices.keys()):
-            s += "{:>{}} : {}\n".format(key, padding, self.choices[key])
+        for key in list(self.answers.keys()):
+            s += "{:>{}} : {}\n".format(key, padding, self.answers[key])
         return s
 
     def add_question(self, *args, **kwargs):
@@ -95,14 +95,14 @@ class Questionnaire:
         return question
 
     def run(self):
-        """Prompt the user to choose one or more options for each question
-        in the questionnaire, and return the choices.
+        """Prompt the user to answer each question in the questionnaire,
+        and return the answers.
         """
-        self.choices = OrderedDict() # reset choices
+        self.answers = OrderedDict() # reset answers
         while True:
             if not self.ask_questions():
                 continue
-            return dict(self.choices)
+            return self.answers
 
     def ask_questions(self):
         """Helper that asks questions in questionnaire, and returns
@@ -110,20 +110,19 @@ class Questionnaire:
         """
         for key in self.questions.keys():
             question = self.which_question(key)
-            if question is not None and key not in self.choices:
+            if question is not None and key not in self.answers:
                 if not self.ask_question(question):
                     return False
         return True
 
-    # def prompt(self, key, options, prompt="", kind="single"):
     def ask_question(self, q):
         """Call the question's prompter, and check to see if user goes back.
         """
         prompt = q.prompt if hasattr(q, 'prompt') else "{}: ".format(q.key)
-        if self.show_choices:
-            prompt = self.show_choices() + "\n{}".format(prompt)
+        if self.show_answers:
+            prompt = self.show_answers() + "\n{}".format(prompt)
 
-        self.choices[q.key], back = q.prompter(prompt, **q.prompter_args)
+        self.answers[q.key], back = q.prompter(prompt, **q.prompter_args)
         if back is not None:
             self.go_back(abs(int(back)))
             return False
@@ -147,13 +146,13 @@ class Questionnaire:
             return True
         for key, val, op in \
             zip(condition.keys, condition.vals, condition.operators):
-            if not op(self.choices[key], val):
+            if not op(self.answers[key], val):
                 return False
         return True
 
     def go_back(self, n=1):
         """Move `n` questions back in the questionnaire, and remove
-        the last `n` choices.
+        the last `n` answers.
         """
-        N = max(len(self.choices)-n-1, 0)
-        self.choices = OrderedDict(islice(self.choices.items(), N))
+        N = max(len(self.answers)-n-1, 0)
+        self.answers = OrderedDict(islice(self.answers.items(), N))
