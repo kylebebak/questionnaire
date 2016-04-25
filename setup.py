@@ -3,9 +3,7 @@ from setuptools import setup
 setup(
     name='questionnaire',
     version='1.1.0',
-    description='Prompts a user to answer a series of questions. At the end of'\
-                ' the questionnaire it returns the answers as a `key -> answer`'\
-                ' OrderedDict',
+    description='Create a questionnaire that a user can fill out with a terminal GUI',
     long_description='Check it out on GitHub...',
     keywords='terminal gui pick question',
     url='https://github.com/kylebebak/questionnaire',

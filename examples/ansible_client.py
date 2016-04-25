@@ -3,7 +3,6 @@ be passed to another program to build a valid `ansible-playbook` command.
 """
 from questionnaire import Questionnaire
 
-
 SERVICES_INITD = ['redis_6379', 'postgresql', 'nginx', 'firewall']
 SERVICES_UPSTART = ['gunicorn', 'celery-worker', 'celery-beat', 'celery-flower']
 SERVICES_DEV = SERVICES_INITD + [s + "-development" for s in SERVICES_UPSTART]
