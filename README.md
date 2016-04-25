@@ -1,6 +1,6 @@
 # questionnaire
 
-__questionnaire__ is a Python package that to prompts users to answer a series of questions, and returns answers. __questionnaire__ allows users to go back and answer questions again. It works with Python 2 and 3.
+__questionnaire__ is a Python package that to prompts users to answer a series of questions, and returns the answers. __questionnaire__ allows users to go back and answer questions again. It works with Python 2 and 3.
 
 ## Installation
 ```sh
@@ -20,13 +20,16 @@ q.add_question('time', options=['morning', 'night'])
 Add a group of conditional questions. Only one of these questions will be asked, depending on the answers to the first two questions.
 ```py
 # nights
-q.add_question('activities', prompter='multiple', options=['eat tacos de pastor', 'go to the cantina', 'do some programming']).\
+q.add_question('activities', prompter='multiple',
+    options=['eat tacos de pastor', 'go to the cantina', 'do some programming']).\
     add_condition(keys=['time'], vals=['night'])
 # saturday morning
-q.add_question('activities', prompter='multiple', options=['eat barbacoa', 'watch footy', 'walk the dog']).\
+q.add_question('activities', prompter='multiple',
+    options=['eat barbacoa', 'watch footy', 'walk the dog']).\
     add_condition(keys=['day', 'time'], vals=['saturday', 'morning'])
 # other mornings
-q.add_question('activities', prompter='multiple', options=['eat granola', 'get dressed', 'go to work']).\
+q.add_question('activities', prompter='multiple',
+    options=['eat granola', 'get dressed', 'go to work']).\
     add_condition(keys=['time'], vals=['morning'])
 ```
 
@@ -38,7 +41,9 @@ print(answers)
 
 ![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/activities_client.gif)
 
-Here's an example that handles raw input. First, add a question using the `raw` prompter.
+- - -
+
+Here's another example. This one handles raw input. First, add a question using the `raw` prompter.
 ```py
 from questionnaire import Questionnaire
 q = Questionnaire()
@@ -48,14 +53,18 @@ q.add_question('age', prompter="raw", prompt='How old are you?', type=int)
 Now you can ask users about their plans for the future, based on how old they are.
 ```py
 # youngsters (age <= 18)
-q.add_question('plans', prompt="Where do you want to go to school?", options=['Valley College', 'La Escuela de Calor']).\
+q.add_question('plans', prompt="Where do you want to go to school?",
+    options=['Valley College', 'La Escuela de Calor']).\
     add_condition(keys=['age'], vals=[18], operators=['<='])
-q.add_question('plans', prompt="Where do you want to work?", options=['On a farm', 'In an office', 'On the couch']).\
+q.add_question('plans', prompt="Where do you want to work?",
+    options=['On a farm', 'In an office', 'On the couch']).\
     add_condition(keys=['age'], vals=[40], operators=['<='])
-q.add_question('plans', prompt="Where do you want to vacation?", options=['El Caribe', 'On a cruise ship', 'Las Islas Canarias']).\
+q.add_question('plans', prompt="Where do you want to vacation?",
+    options=['El Caribe', 'On a cruise ship', 'Las Islas Canarias']).\
     add_condition(keys=['age'], vals=[60], operators=['<='])
 # old folks (more than 60 years old)
-q.add_question('plans', prompt="Where do you want to retire?", options=['El campo', 'The beach', 'San Miguel de Allende'])
+q.add_question('plans', prompt="Where do you want to retire?",
+    options=['El campo', 'The beach', 'San Miguel de Allende'])
 
 answers = q.run()
 print(answers)
