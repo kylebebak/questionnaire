@@ -1,6 +1,6 @@
 # questionnaire
 
-__questionnaire__ is a Python package that to prompts users to answer a series of questions, and returns the answers as a `key -> answer` OrderedDict. __questionnaire__ allows users to go back and answer questions again. It works with Python 2 and 3.
+__questionnaire__ is a Python package that to prompts users to answer a series of questions, and returns answers. __questionnaire__ allows users to go back and answer questions again. It works with Python 2 and 3.
 
 ## Installation
 ```sh
@@ -8,7 +8,7 @@ pip install questionnaire
 ```
 
 ## Usage
-Instantiate a questionnaire and add some questions.
+Instantiate a questionnaire and add a couple of questions.
 ```py
 from questionnaire import Questionnaire
 q = Questionnaire()
@@ -30,7 +30,7 @@ q.add_question('activities', prompter='multiple', options=['eat granola', 'get d
     add_condition(keys=['time'], vals=['morning'])
 ```
 
-Run the questionnaire and print the answers.
+Run the questionnaire and print the answers. The answers get returned as an `OrderedDict`.
 ```py
 answers = q.run()
 print(answers)
@@ -45,7 +45,7 @@ q = Questionnaire()
 q.add_question('age', prompter="raw", prompt='How old are you?', type=int)
 ```
 
-Now you can ask users about their plans, based on how old they are.
+Now you can ask users about their plans for the future, based on how old they are.
 ```py
 # youngsters (age <= 18)
 q.add_question('plans', prompt="Where do you want to go to school?", options=['Valley College', 'La Escuela de Calor']).\
