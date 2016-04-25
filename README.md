@@ -77,9 +77,9 @@ print(answers)
 Check out clients in the `examples` directory. The [ansible client](examples/ansible_client.py) generates an answers dict that you pass to another program to build up an `ansible-playbook` command for administering servers. I do this almost every day at my job!
 
 ## Prompters
-The core prompters are currently `single`, `multiple`, and `raw`. `single` is the default prompter. All three are used in the usage examples above.
+The core prompters are currently `single`, `multiple`, and `raw`. The first two depend on the excellent [pick](https://github.com/wong2/pick) package. All three are used in the usage examples above.
 
-`single` and `multiple` depend on the excellent [pick](https://github.com/wong2/pick) package. `multiple` allows users to pick [multiple options](#multiple-options) for a single question, while `raw` handles [raw input](#raw-input) with basic type checking.
+`single` is the default prompter. It requires the user to pick one of the options from the options list. `multiple` allows users to pick [multiple options](#multiple-options) for a single question, while `raw` handles [raw input](#raw-input) with basic type checking.
 
 __questionnaire__ is easy to extend. Write a prompter function that satisfies the prompter API, and instead of passing a string to `add_question` to look up one of the core prompters, pass your prompter function. Check out the [core prompters](questionnaire/prompters.py) for examples on how to write prompter functions.
 
