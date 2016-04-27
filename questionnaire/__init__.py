@@ -73,8 +73,6 @@ class Question:
         self.prompt = prompt.strip() + " " if prompt \
                                            else "{}: ".format(self.key)
 
-
-
     def run_prompter(self):
         self.prompter(self.prompter_args)
 

@@ -46,15 +46,16 @@ def multiple(prompt="", **kwargs):
     """Calls `pick` in a while loop to allow user to pick multiple
     options. Returns a list of chosen options.
     """
-    ALL = kwargs["ALL"] if "ALL" in kwargs else "all"
-    DONE = kwargs["DONE"] if "DONE" in kwargs else "done..."
+    ALL = kwargs["all"] if "all" in kwargs else "all"
+    DONE = kwargs["done"] if "done" in kwargs else "done..."
     options = kwargs["options"] if "options" in kwargs else []
-    options, options_ = [ALL] + options + [DONE], []
+    options = [ALL] + options + [DONE] if ALL else options + [DONE]
+    options_ = []
     while True:
         option, i = single('{}{}'.format(prompt, options_), options=options)
         if type(i) is int: # user went back
             return (options_, 0) if options_ else (options_, 1)
-        if option == ALL:
+        if ALL and option == ALL:
             return ([ALL], None)
         if option == DONE:
             return (options_, None)
