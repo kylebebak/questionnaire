@@ -1,28 +1,45 @@
-from collections import OrderedDict
-from itertools import islice
 import operator
 import inspect
+import sys
+from collections import OrderedDict
+from itertools import islice
+from functools import wraps
 
 from .prompters import prompters
+
+
+def exit_on_keyboard_interrupt(f):
+    """Decorator that allows user to exit script by sending a keyboard interrupt
+    (ctrl + c) without raising an exception.
+    """
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        raise_exception = kwargs.pop('raise_exception', False)
+        try:
+            return f(*args, **kwargs)
+        except KeyboardInterrupt:
+            if not raise_exception:
+                sys.exit()
+            raise KeyboardInterrupt
+    return wrapper
 
 
 class Condition:
     """Container for condition properties.
     """
     OPERATORS = {
-        '==' : operator.eq,
-        '!=' : operator.ne,
-        '>'  : operator.lt,
-        '<'  : operator.gt,
-        '<=' : operator.le,
-        '>=' : operator.ge,
-        }
+        '==': operator.eq,
+        '!=': operator.ne,
+        '>': operator.lt,
+        '<': operator.gt,
+        '<=': operator.le,
+        '>=': operator.ge,
+    }
 
     def __init__(self, keys=[], vals=[], operators=[]):
         self.keys = list(keys)
         self.vals = list(vals)
-        self.operators = list(operators) if operators \
-            else ['==']*len(self.keys)
+        self.operators = list(operators) if operators else ['==']*len(self.keys)
 
         vars = [self.keys, self.vals, self.operators]
         assert all(type(var) == list for var in vars), \
@@ -42,8 +59,8 @@ class Condition:
                 n_args = len(inspect.getargspec(op)[0])
                 return n_args == 2
             except:
-                print("Condition has invalid operator(s). Operators must " \
-                "accept two args. Hint: to define your own, use lamdbas")
+                print("Condition has invalid operator(s). Operators must "
+                      "accept two args. Hint: to define your own, use lamdbas")
                 raise
 
 
@@ -88,8 +105,8 @@ class Questionnaire:
     method when it is called.
     """
     def __init__(self, show_answers=True):
-        self.questions = OrderedDict() # key -> list of Question instances
-        self.answers = OrderedDict() # key -> answer
+        self.questions = OrderedDict()  # key -> list of Question instances
+        self.answers = OrderedDict()  # key -> answer
         self._show_answers = show_answers
 
     def show_answers(self, s=""):
@@ -113,14 +130,17 @@ class Questionnaire:
         self.questions.setdefault(question.key, []).append(question)
         return question
 
+    @exit_on_keyboard_interrupt
     def run(self):
         """Prompt the user to answer each question in the questionnaire,
         and return the answers.
         """
-        self.answers = OrderedDict() # reset answers
+        self.answers = OrderedDict()  # reset answers
         while True:
             if not self.ask_questions():
                 continue
+            for k, v in self.answers.items():
+                print('{}: {}'.format(k, v))
             return self.answers
 
     def ask_questions(self):
@@ -163,8 +183,7 @@ class Questionnaire:
         """
         if not condition:
             return True
-        for key, val, op in \
-            zip(condition.keys, condition.vals, condition.operators):
+        for key, val, op in zip(condition.keys, condition.vals, condition.operators):
             if not op(self.answers[key], val):
                 return False
         return True

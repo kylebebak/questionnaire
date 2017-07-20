@@ -1,11 +1,15 @@
 # questionnaire
 
-__questionnaire__ is a Python package that to prompts users to answer a series of questions, and returns the answers. __questionnaire__ allows users to go back and answer questions again. It works with Python 2 and 3.
+![License](https://camo.githubusercontent.com/890acbdcb87868b382af9a4b1fac507b9659d9bf/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d4d49542d626c75652e737667)
+
+__questionnaire__ is a Python package that prompts users to answer a series of questions, and returns the answers. __questionnaire__ allows users to go back and answer questions again. It works with Python 2 and 3.
+
 
 ## Installation
 ```sh
 pip install questionnaire
 ```
+
 
 ## Usage
 Instantiate a questionnaire and add a couple of questions.
@@ -74,7 +78,8 @@ print(answers)
 
 
 ## More Examples
-Check out clients in the `examples` directory. The [ansible client](examples/ansible_client.py) generates an answers dict that you pass to another program to build up an `ansible-playbook` command for administering servers. I do this almost every day at my job!
+Check out clients in the `examples` directory. The [Ansible client](examples/ansible_client.py) generates an answers dict that you pass to another program to build up an `ansible-playbook` command for administering servers. I do this almost every day at my job!
+
 
 ## Prompters
 The core prompters are currently `single`, `multiple`, and `raw`. The first two depend on the excellent [pick](https://github.com/wong2/pick) package. All three are used in the usage examples above.
@@ -83,8 +88,10 @@ The core prompters are currently `single`, `multiple`, and `raw`. The first two 
 
 __questionnaire__ is easy to extend. Write a prompter function that satisfies the prompter API, and instead of passing a string to `add_question` to look up one of the core prompters, pass your prompter function. Check out the [core prompters](questionnaire/prompters.py) for examples on how to write prompter functions.
 
+
 ### Multiple Options
 If you want to allow the user to pick multiple options for a single question, pass `prompter="multiple"` and a list of `options` to `add_question`. The `questionnaire` will add the chosen options to the `answers` dict as a list. As with the default `single` prompter, users can use <kbd>&larr;</kbd> or <kbd>h</kbd> to go back.
+
 
 ### Raw Input
 For raw input, pass `prompter="raw"` and a `type` (`str`, `int`, `float`, ...) to `add_question`. The default type is `str`. By default, the user can go back by entering `<`. To change this, pass your own `go_back` string to `add_question`.
@@ -99,14 +106,18 @@ A condition can be added to a question by chaining a call to `add_condition` ont
 
 Each item in the `keys` list must be a key for a previously answered question in the questionnaire. In a condition, the __answers__ get compared with __vals__, and if their relationships are all `True` under the __operators__, the condition is satisfied. If this sounds tricky, just check out the clients!
 
+
 #### Condition Operators
 The default operator is __equals__. The following operators can be passed as strings: `==`, `!=`, `<`, `>`, `<=`, `>=`, and their corresponding operator functions are looked up. If you want to define your own operators, make sure they are functions that accept two values and return a boolean. Hint: use lambda functions.
 
+
 ## Tests
-Not yet...
+If you've forked __questionnaire__ and you want to make sure it's not broken, the modules in the `examples` directory can be used to test it. Run, for example, `python -m examples.plans_client` or `python -m examples.activities_client` from the root of the repo.
+
 
 ## Contributing
 If you want to improve __questionnaire__ with tests, new core prompters, or other features, fork the repo and submit a pull request!
+
 
 ## License
 This code is licensed under the [MIT License](https://opensource.org/licenses/MIT).

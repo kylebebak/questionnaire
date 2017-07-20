@@ -14,6 +14,7 @@ from pick import Picker
 
 prompters = {}
 
+
 def register(key="function"):
     """Add decorated functions to prompters dict.
     """
@@ -36,7 +37,7 @@ def single(prompt="", **kwargs):
     picker.register_custom_handler(ord('h'), go_back)
     picker.register_custom_handler(curses.KEY_LEFT, go_back)
     option, i = picker.start()
-    if i < 0: # user went back
+    if i < 0:  # user went back
         return option, 1
     return option, None
 
@@ -53,7 +54,7 @@ def multiple(prompt="", **kwargs):
     options_ = []
     while True:
         option, i = single('{}{}'.format(prompt, options_), options=options)
-        if type(i) is int: # user went back
+        if type(i) is int:  # user went back
             return (options_, 0) if options_ else (options_, 1)
         if ALL and option == ALL:
             return ([ALL], None)
