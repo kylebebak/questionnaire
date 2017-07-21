@@ -4,6 +4,7 @@ import sys
 from collections import OrderedDict
 from itertools import islice
 from functools import wraps
+import json
 
 from .prompters import prompters
 
@@ -87,8 +88,7 @@ class Question:
             self.prompter = prompter
 
     def assign_prompt(self, prompt):
-        self.prompt = prompt.strip() + " " if prompt \
-                                           else "{}: ".format(self.key)
+        self.prompt = prompt.strip() + " " if prompt else "{}: ".format(self.key)
 
     def run_prompter(self):
         self.prompter(self.prompter_args)
@@ -104,10 +104,11 @@ class Questionnaire:
     the questionnaire. Additional keyword args are passed to the prompter
     method when it is called.
     """
-    def __init__(self, show_answers=True):
+    def __init__(self, show_answers=True, dump_to_list=False):
         self.questions = OrderedDict()  # key -> list of Question instances
         self.answers = OrderedDict()  # key -> answer
         self._show_answers = show_answers
+        self.dump_to_list = dump_to_list
 
     def show_answers(self, s=""):
         """Helper method for displaying the answers so far.
@@ -132,15 +133,18 @@ class Questionnaire:
 
     @exit_on_keyboard_interrupt
     def run(self):
-        """Prompt the user to answer each question in the questionnaire,
-        and return the answers.
+        """Prompt the user to answer each question in the questionnaire, then
+        print the answers to stdout and return them.
         """
         self.answers = OrderedDict()  # reset answers
         while True:
             if not self.ask_questions():
                 continue
-            for k, v in self.answers.items():
-                print('{}: {}'.format(k, v))
+            if self.dump_to_list:
+                answers = [[k, v] for k, v in self.answers.items()]
+                print(json.dumps(answers))
+            else:
+                print(json.dumps(self.answers))  # print answers to stdout, and return them
             return self.answers
 
     def ask_questions(self):
