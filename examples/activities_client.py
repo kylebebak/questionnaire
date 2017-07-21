@@ -15,4 +15,3 @@ q.add_question('activities', prompter='multiple', options=['eat granola', 'get d
     add_condition(keys=['time'], vals=['morning'])
 
 answers = q.run()
-print(answers)

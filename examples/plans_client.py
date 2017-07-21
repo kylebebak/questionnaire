@@ -14,4 +14,3 @@ q.add_question('plans', prompt="Where do you want to vacation?", options=['El Ca
 q.add_question('plans', prompt="Where do you want to retire?", options=['El campo', 'The beach', 'San Miguel de Allende'])
 
 answers = q.run()
-print(answers)
