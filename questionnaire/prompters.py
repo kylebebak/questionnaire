@@ -34,15 +34,16 @@ def single(prompt="", **kwargs):
     def go_back(picker):
         return None, -1
     options = kwargs.get('options', [])
+    verbose_options = prepare_verbose_options(options, kwargs.get('verbose_options', None))
 
-    picker = Picker(options, title=prompt, indicator='=>')
+    picker = Picker(verbose_options, title=prompt, indicator='=>')
     picker.register_custom_handler(ord('h'), go_back)
     picker.register_custom_handler(curses.KEY_LEFT, go_back)
     with stdout_redirected(sys.stderr):
-        option, i = picker.start()
-        if i < 0:  # user went back
-            return option, 1
-        return option, None
+        option, index = picker.start()
+        if index >= 0:
+            return options[index], index
+        return None, index
 
 
 @register(key="multiple")
@@ -53,18 +54,39 @@ def multiple(prompt="", **kwargs):
     ALL = kwargs.get('all', 'all')
     DONE = kwargs.get('done', 'done...')
     options = kwargs.get('options', [])
-    options = [ALL] + options + [DONE] if ALL else options + [DONE]
+    verbose_options = prepare_verbose_options(options, kwargs.get('verbose_options', None))
+
+    options = options + [DONE]
+    verbose_options = verbose_options + [DONE]
+    if ALL:
+        options = [ALL] + options
+        verbose_options = [ALL] + verbose_options
+
     options_ = []
+    verbose_options_ = []
     while True:
-        option, i = single('{}{}'.format(prompt, options_), options=options)
-        if type(i) is int:  # user went back
-            return (options_, 0) if options_ else (options_, 1)
+        option, index = single(
+            '{}{}'.format(prompt, verbose_options_), options=verbose_options
+        )
+        if index < 0:  # user went back
+            return (options_, '') if options_ else (options_, -1)
         if ALL and option == ALL:
             return ([ALL], None)
         if option == DONE:
             return (options_, None)
-        options_.append(option)
-        options.remove(option)
+        options_.append(options[index])
+        options.pop(index)
+        verbose_options_.append(option)
+        verbose_options.pop(index)
+
+
+def prepare_verbose_options(options, verbose_options):
+    if verbose_options is None:
+        verbose_options = list(options)
+    if not len(options) == len(verbose_options):
+        print('`options` must have the same length as `verbose_options`')
+        sys.exit()
+    return verbose_options
 
 
 @register(key="raw")
@@ -81,7 +103,7 @@ def raw(prompt="", **kwargs):
                     answer = raw_input(prompt)
                 else:
                     answer = input(prompt)
-                return (answer, 1) if answer == go_back else (type_(answer), None)
+                return (answer, -1) if answer == go_back else (type_(answer), None)
             except ValueError:
                 print("\n`{}` is not a valid `{}`\n".format(answer, type_))
 

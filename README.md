@@ -2,46 +2,84 @@
 
 ![License](https://camo.githubusercontent.com/890acbdcb87868b382af9a4b1fac507b9659d9bf/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d4d49542d626c75652e737667)
 
-__questionnaire__ is a Python package that prompts users to answer a series of questions, and returns the answers. __questionnaire__ allows users to go back and answer questions again. It works with Python 2 and 3.
+__questionnaire__ is a mini-DSL for writing command line questionnaires. It prompts a user to answer a series of questions and returns the answers.
+
+__questionnaire__ is simple and powerful. Some features: 
+
+- Prints the answers as JSON to stdout
+  + You can pipe the answers of a questionnaire to any program that can parse JSON
+- Allows users to go back and reanswer questions
+- Supports conditional questions (questions can depend on previous answers)
+- Supports the following types of questions: raw input, choose one, choose many
+- No mandatory coupling between question presentation and answer values
 
 
 ## Installation
+__questionnaire__ is written in Python. The best way to install it is with `pip`.
+
 ```sh
 pip install questionnaire
 ```
 
 
 ## Usage
-Instantiate a questionnaire and add a couple of questions.
+Paste the following into a file and save it. Let's assume you save it as `questions.py`. Now go the command line and run `python questions.py`.
+
 ```py
+# questions.py
 from questionnaire import Questionnaire
 q = Questionnaire()
 
-q.add_question('day', options=['monday', 'friday', 'saturday'])
-q.add_question('time', options=['morning', 'night'])
+q.add_question('day', prompt='What day is it?', options=['monday', 'friday', 'saturday'])
+q.add_question('time', prompt='What time is it?', options=['morning', 'night'],
+               verbose_options=['in the morning', 'at night'])
+
+answers = q.run()
 ```
 
-Add a group of conditional questions. Only one of these questions will be asked, depending on the answers to the first two questions.
+What's happening here? We instantiate a questionnaire with `q = Questionnaire()`, add two questions to it, and run the questionnaire. At the end the answers are dumped to stdout as JSON.
+
+See those optional `verbose_options`? The presentation of your questionnaire can be totally decoupled from the answers it returns!
+
+Now try running `python questions.py > questions_output.json`. Check out the answers in the output file. You could have just as easily piped these to another program, and all it would have to do to handle the answers is parse that JSON.
+
+
+### Getting Fancy
+Add a group of conditional questions to the questionnaire above. Only one of these questions will be asked, depending on the answers to the first two questions. Run the questionnaire with `python questions.py`, and inspect the answers as well.
+
 ```py
+# questions.py
+from questionnaire import Questionnaire
+q = Questionnaire(dump_to_array=True)
+
+q.add_question('day', options=['monday', 'friday', 'saturday'])
+q.add_question('time', options=['morning', 'night'])
+
 # nights
 q.add_question('activities', prompter='multiple',
     options=['eat tacos de pastor', 'go to the cantina', 'do some programming']).\
     add_condition(keys=['time'], vals=['night'])
 # saturday morning
 q.add_question('activities', prompter='multiple',
-    options=['eat barbacoa', 'watch footy', 'walk the dog']).\
+    options=['barbacoa', 'footy', 'walk_dog'],
+    verbose_options=['eat barbacoa', 'watch footy', 'walk the dog']).\
     add_condition(keys=['day', 'time'], vals=['saturday', 'morning'])
 # other mornings
 q.add_question('activities', prompter='multiple',
     options=['eat granola', 'get dressed', 'go to work']).\
     add_condition(keys=['time'], vals=['morning'])
+
+answers = q.run()
+print()
+for q, a in answers.items():
+    print(q, a)
 ```
 
-Run the questionnaire and print the answers. The answers get returned as an `OrderedDict`.
-```py
-answers = q.run()
-print(answers)
-```
+As you can see, the answers are always printed to stdout as JSON, but they're also returned  as an ordered dictionary (a Python `OrderedDict` to be exact).
+
+What does this mean? If you don't want to write Python code, you can write a standalone questionnaire that just pipes its answers to another program for handling. If you want to handle them in the same script, you get back a nice `OrderedDict` with all the answers!
+
+Also, did you notice the `dump_to_array=True` argument? This prints the answers as a JSON array instead of a JSON object. This guarantees parsing the answers doesn't screw up their order, although it might make parsing more cumbersome.
 
 ![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/activities_client.gif)
 
@@ -71,12 +109,12 @@ q.add_question('plans', prompt="Where do you want to retire?",
     options=['El campo', 'The beach', 'San Miguel de Allende'])
 
 answers = q.run()
-print(answers)
 ```
 
 ![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/plans_client.gif)
 
 
+## 
 ## More Examples
 Check out clients in the `examples` directory. The [Ansible client](examples/ansible_client.py) generates an answers dict that you pass to another program to build up an `ansible-playbook` command for administering servers. I do this almost every day at my job!
 
@@ -94,7 +132,7 @@ If you want to allow the user to pick multiple options for a single question, pa
 
 
 ### Raw Input
-For raw input, pass `prompter="raw"` and a `type` (`str`, `int`, `float`, ...) to `add_question`. The default type is `str`. By default, the user can go back by entering `<`. To change this, pass your own `go_back` string to `add_question`.
+For raw input, pass `prompter="raw"` and a `type` (`str`, `int`, `float`, ...) to `add_question`. The default type is `str`. By default, the user can go back from a raw input question by entering `<` as the answer. To change this, pass your own `go_back` string to `add_question`.
 
 
 ## Conditional Questions
@@ -107,16 +145,16 @@ A condition can be added to a question by chaining a call to `add_condition` ont
 Each item in the `keys` list must be a key for a previously answered question in the questionnaire. In a condition, the __answers__ get compared with __vals__, and if their relationships are all `True` under the __operators__, the condition is satisfied. If this sounds tricky, just check out the clients!
 
 
-#### Condition Operators
+### Condition Operators
 The default operator is __equals__. The following operators can be passed as strings: `==`, `!=`, `<`, `>`, `<=`, `>=`, and their corresponding operator functions are looked up. If you want to define your own operators, make sure they are functions that accept two values and return a boolean. Hint: use lambda functions.
 
 
 ## Tests
-If you've forked __questionnaire__ and you want to make sure it's not broken, the modules in the `examples` directory can be used to test it. Run, for example, `python -m examples.plans_client` or `python -m examples.activities_client` from the root of the repo.
+If you've forked __questionnaire__ and want to make sure it's not broken, the modules in the `examples` directory should be used to test it. Run, for example, `python -m examples.plans_client` or `python -m examples.activities_client` from the root of the repo.
 
 
 ## Contributing
-If you want to improve __questionnaire__ with tests, new core prompters, or other features, fork the repo and submit a pull request!
+If you want to improve __questionnaire__ with tests, new core prompters, or other features, fork the repo and submit a pull request. Automated tests or new prompters would be nice!
 
 
 ## License

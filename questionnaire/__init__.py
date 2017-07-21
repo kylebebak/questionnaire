@@ -90,9 +90,6 @@ class Question:
     def assign_prompt(self, prompt):
         self.prompt = prompt.strip() + " " if prompt else "{}: ".format(self.key)
 
-    def run_prompter(self):
-        self.prompter(self.prompter_args)
-
     def add_condition(self, **kwargs):
         if 'keys' in kwargs and 'vals' in kwargs:
             self.condition = Condition(**kwargs)
@@ -104,11 +101,11 @@ class Questionnaire:
     the questionnaire. Additional keyword args are passed to the prompter
     method when it is called.
     """
-    def __init__(self, show_answers=True, dump_to_list=False):
+    def __init__(self, show_answers=True, dump_to_array=False):
         self.questions = OrderedDict()  # key -> list of Question instances
         self.answers = OrderedDict()  # key -> answer
         self._show_answers = show_answers
-        self.dump_to_list = dump_to_list
+        self.dump_to_array = dump_to_array
 
     def show_answers(self, s=""):
         """Helper method for displaying the answers so far.
@@ -140,7 +137,7 @@ class Questionnaire:
         while True:
             if not self.ask_questions():
                 continue
-            if self.dump_to_list:
+            if self.dump_to_array:
                 answers = [[k, v] for k, v in self.answers.items()]
                 print(json.dumps(answers))
             else:
@@ -166,8 +163,13 @@ class Questionnaire:
             prompt = self.show_answers() + "\n{}".format(q.prompt)
 
         self.answers[q.key], back = q.prompter(prompt, **q.prompter_args)
-        if back is not None:
-            self.go_back(abs(int(back)))
+        if back is None:
+            return True
+        if back == '':  # super hacky =/
+            self.go_back(0)
+            return False
+        if back < 0:
+            self.go_back(abs(back))
             return False
         return True
 
