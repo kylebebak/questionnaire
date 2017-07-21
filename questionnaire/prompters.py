@@ -6,6 +6,7 @@ questionnaire will go back that number of questions.
 Extending questionnaire is as simple writing your own prompter and passing
 it to `add_question`.
 """
+from __future__ import print_function
 import sys
 import curses
 import os
@@ -15,6 +16,10 @@ from pick import Picker
 
 
 prompters = {}
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 
 def register(key="function"):
@@ -84,7 +89,7 @@ def prepare_verbose_options(options, verbose_options):
     if verbose_options is None:
         verbose_options = list(options)
     if not len(options) == len(verbose_options):
-        print('`options` must have the same length as `verbose_options`')
+        eprint('Errors: `options` must have the same length as `verbose_options`')
         sys.exit()
     return verbose_options
 

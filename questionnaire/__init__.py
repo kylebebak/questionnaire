@@ -6,7 +6,7 @@ from itertools import islice
 from functools import wraps
 import json
 
-from .prompters import prompters
+from .prompters import prompters, eprint
 
 
 def exit_on_keyboard_interrupt(f):
@@ -60,8 +60,8 @@ class Condition:
                 n_args = len(inspect.getargspec(op)[0])
                 return n_args == 2
             except:
-                print("Condition has invalid operator(s). Operators must "
-                      "accept two args. Hint: to define your own, use lamdbas")
+                eprint("Error: Condition has invalid operator(s). Operators must "
+                       "accept two args. Hint: to define your own, use lamdbas")
                 raise
 
 
@@ -101,11 +101,15 @@ class Questionnaire:
     the questionnaire. Additional keyword args are passed to the prompter
     method when it is called.
     """
-    def __init__(self, show_answers=True, dump_to_array=False):
+    def __init__(self, show_answers=True, out_type='obj'):
         self.questions = OrderedDict()  # key -> list of Question instances
         self.answers = OrderedDict()  # key -> answer
         self._show_answers = show_answers
-        self.dump_to_array = dump_to_array
+        out_types = ('obj', 'array', 'plain')
+        if out_type not in out_types:
+            eprint("Error: '{}' not in {}".format(out_type, out_types))
+            sys.exit()
+        self.out_type = out_type
 
     def show_answers(self, s=""):
         """Helper method for displaying the answers so far.
@@ -134,14 +138,23 @@ class Questionnaire:
         print the answers to stdout and return them.
         """
         self.answers = OrderedDict()  # reset answers
+
+        def stringify(val):
+            if type(val) in (list, tuple):
+                return ', '.join(str(e) for e in val)
+            return val
+
         while True:
             if not self.ask_questions():
                 continue
-            if self.dump_to_array:
+            if self.out_type == 'obj':
+                print(json.dumps(self.answers))  # print answers to stdout, and return them
+            elif self.out_type == 'array':
                 answers = [[k, v] for k, v in self.answers.items()]
                 print(json.dumps(answers))
-            else:
-                print(json.dumps(self.answers))  # print answers to stdout, and return them
+            elif self.out_type == 'plain':
+                answers = '\n'.join('{}: {}'.format(k, stringify(v)) for k, v in self.answers.items())
+                print(answers)
             return self.answers
 
     def ask_questions(self):

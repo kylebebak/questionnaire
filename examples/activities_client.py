@@ -1,6 +1,6 @@
 from questionnaire import Questionnaire
 
-q = Questionnaire(dump_to_array=True)
+q = Questionnaire(out_type='array')
 q.add_question('day', options=['monday', 'friday', 'saturday'])
 q.add_question('time', options=['morning', 'night'])
 

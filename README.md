@@ -2,12 +2,12 @@
 
 ![License](https://camo.githubusercontent.com/890acbdcb87868b382af9a4b1fac507b9659d9bf/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d4d49542d626c75652e737667)
 
-__questionnaire__ is a mini-DSL for writing command line questionnaires. It prompts a user to answer a series of questions and returns the answers.
+__questionnaire__ is a mini-DSL for writing command line questionnaires! It prompts a user to answer a series of questions and returns the answers.
 
 __questionnaire__ is simple and powerful. Some features: 
 
-- Prints the answers as JSON to stdout
-  + You can pipe the answers of a questionnaire to any program that can parse JSON
+- Prints answers as JSON (or as plain text) to stdout
+  + Pipe questionnaire answers to other programs and parse them easily
 - Allows users to go back and reanswer questions
 - Supports conditional questions (questions can depend on previous answers)
 - Supports the following types of questions: raw input, choose one, choose many
@@ -39,9 +39,7 @@ answers = q.run()
 
 What's happening here? We instantiate a questionnaire with `q = Questionnaire()`, add two questions to it, and run the questionnaire. At the end the answers are dumped to stdout as JSON.
 
-See those optional `verbose_options`? The presentation of your questionnaire can be totally decoupled from the answers it returns!
-
-Now try running `python questions.py > questions_output.json`. Check out the answers in the output file. You could have just as easily piped these to another program, and all it would have to do to handle the answers is parse that JSON.
+See those optional `verbose_options`? The presentation of your questionnaire can be decoupled from the answers it returns!
 
 
 ### Getting Fancy
@@ -50,7 +48,7 @@ Add a group of conditional questions to the questionnaire above. Only one of the
 ```py
 # questions.py
 from questionnaire import Questionnaire
-q = Questionnaire(dump_to_array=True)
+q = Questionnaire(out_type='array')
 
 q.add_question('day', options=['monday', 'friday', 'saturday'])
 q.add_question('time', options=['morning', 'night'])
@@ -75,11 +73,15 @@ for q, a in answers.items():
     print(q, a)
 ```
 
-As you can see, the answers are always printed to stdout as JSON, but they're also returned  as an ordered dictionary (a Python `OrderedDict` to be exact).
+As you can see, the answers are always printed to stdout, but they're also returned as an ordered dictionary (a Python `OrderedDict` to be exact).
 
 What does this mean? If you don't want to write Python code, you can write a standalone questionnaire that just pipes its answers to another program for handling. If you want to handle them in the same script, you get back a nice `OrderedDict` with all the answers!
 
-Also, did you notice the `dump_to_array=True` argument? This prints the answers as a JSON array instead of a JSON object. This guarantees parsing the answers doesn't screw up their order, although it might make parsing more cumbersome.
+Also, did you notice the `out_type='array'` argument? This prints the answers as a JSON array instead of a JSON object. This guarantees parsing the answers doesn't screw up their order, although it might make parsing more cumbersome.
+
+
+#### Plain Text
+If you want plan on piping the results of a questionnaire to a shell script, you might want plain text instead of JSON. Just pass `out_type='plain'` when you instantiate your `Questionnaire`. The answers will be printed to stdout as plain text, one answer per line.
 
 ![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/activities_client.gif)
 
@@ -114,7 +116,6 @@ answers = q.run()
 ![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/plans_client.gif)
 
 
-## 
 ## More Examples
 Check out clients in the `examples` directory. The [Ansible client](examples/ansible_client.py) generates an answers dict that you pass to another program to build up an `ansible-playbook` command for administering servers. I do this almost every day at my job!
 
