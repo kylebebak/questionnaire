@@ -2,12 +2,12 @@ from setuptools import setup
 
 setup(
     name='questionnaire',
-    version='1.1.0',
-    description='Create a questionnaire that a user can fill out with a terminal GUI',
+    version='1.2.0',
+    description='Elegant mini-DSL for creating command line questionnaires',
     long_description='Check it out on GitHub...',
-    keywords='terminal gui pick question',
+    keywords='terminal gui pick question option',
     url='https://github.com/kylebebak/questionnaire',
-    download_url='https://github.com/kylebebak/questionnaire/tarball/1.1.0',
+    download_url='https://github.com/kylebebak/questionnaire/tarball/1.2.0',
     author='kylebebak',
     author_email='kylebebak@gmail.com',
     license='MIT',

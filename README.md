@@ -157,5 +157,9 @@ If you've forked __questionnaire__ and want to make sure it's not broken, the mo
 If you want to improve __questionnaire__ with tests, new core prompters, or other features, fork the repo and submit a pull request. Automated tests or new prompters would be nice!
 
 
+## Gotchas
+__questionnaire__ merges `stdout` with `stderr` while the prompters are running. If you run a questionnaire and redirect `stderr` you'll find it contains everything printed to the terminal by `curses`.
+
+
 ## License
 This code is licensed under the [MIT License](https://opensource.org/licenses/MIT).
