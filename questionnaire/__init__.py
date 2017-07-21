@@ -82,7 +82,9 @@ class Question:
         override this method in a Question subclass.
         """
         if type(prompter) is str:
-            assert prompter in prompters, "This is not a core prompter"
+            if prompter not in prompters:
+                eprint("Error: '{}' is not a core prompter".format(prompter))
+                sys.exit()
             self.prompter = prompters[prompter]
         else:
             self.prompter = prompter
