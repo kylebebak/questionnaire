@@ -38,6 +38,7 @@ def single(prompt="", **kwargs):
     """
     def go_back(picker):
         return None, -1
+
     options = kwargs.get('options', [])
     verbose_options = prepare_verbose_options(options, kwargs.get('verbose_options', None))
 
@@ -46,9 +47,11 @@ def single(prompt="", **kwargs):
     picker.register_custom_handler(curses.KEY_LEFT, go_back)
     with stdout_redirected(sys.stderr):
         option, index = picker.start()
-        if index >= 0:
+        if index == -1:
+            return None, -1
+        if kwargs.get('return_index', False):  # `single` was called by a special client, e.g. `multiple`
             return options[index], index
-        return None, index
+        return options[index], None
 
 
 @register(key="multiple")
@@ -71,10 +74,10 @@ def multiple(prompt="", **kwargs):
     verbose_options_ = []
     while True:
         option, index = single(
-            '{}{}'.format(prompt, verbose_options_), options=verbose_options
+            '{}{}'.format(prompt, verbose_options_), options=verbose_options, return_index=True
         )
         if index < 0:  # user went back
-            return (options_, '') if options_ else (options_, -1)
+            return (options_, 0) if options_ else (options_, -1)
         if ALL and option == ALL:
             return ([ALL], None)
         if option == DONE:

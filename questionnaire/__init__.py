@@ -180,13 +180,8 @@ class Questionnaire:
         self.answers[q.key], back = q.prompter(prompt, **q.prompter_args)
         if back is None:
             return True
-        if back == '':  # super hacky =/
-            self.go_back(0)
-            return False
-        if back < 0:
-            self.go_back(abs(back))
-            return False
-        return True
+        self.go_back(abs(back))
+        return False
 
     def which_question(self, key):
         """Decide which Question instance to select from the list of questions
