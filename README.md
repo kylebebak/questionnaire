@@ -8,11 +8,12 @@ __questionnaire__ is simple and powerful. Some features:
 
 - Print answers as JSON (or as plain text) to stdout
   + Pipe answers to other programs and parse them easily
-- Allows users to go back and reanswer questions
+- Optionally allow users to go back and reanswer questions
 - Run entire questionnaire, or ask questions one at a time
   + Modify questionnaire as it's being run
+  + Run other code midway through questionnaire, then resume questionnaire
 - Supports conditional questions (questions can depend on previous answers)
-- Supports the following types of questions: raw input, choose one, choose many
+- Supports the following types of questions: __raw input__, __choose one__, __choose many__
 - No mandatory coupling between question presentation and answer values
 
 
@@ -37,12 +38,12 @@ q.add_question('time', prompt='What time is it?', options=['morning', 'night'],
                verbose_options=['in the morning', 'at night'])
 
 q.run()
-print(q.answers)
+print(q.format_answers())
 ~~~
 
 What's happening here? We instantiate a questionnaire with `q = Questionnaire()`, add two questions to it, and run the questionnaire. At the end the answers are dumped to stdout as JSON.
 
-See those optional `verbose_options`? The presentation of your questionnaire can be decoupled from the answers it returns!
+See those optional `verbose_options`? The presentation of your questionnaire __can be decoupled from the answers it returns__.
 
 
 ### Getting Fancy
@@ -74,21 +75,20 @@ q.run()
 print(q.format_answers(fmt='array'))
 ~~~
 
-As you can see, the answers are always printed to stdout, but they're also returned as an ordered dictionary (a Python `OrderedDict` to be exact).
+As you can see, it's easy to print answers to stdout. What does this mean? If you don't want to write Python code, you can write a standalone questionnaire that just pipes its answers to another program for handling. If you want to handle them in the same script, just reference `q.answers`, which is a nice `OrderedDict`.
 
-What does this mean? If you don't want to write Python code, you can write a standalone questionnaire that just pipes its answers to another program for handling. If you want to handle them in the same script, you get back a nice `OrderedDict` with all the answers!
-
-Also, did you notice the `fmt='array'` argument? This prints the answers as a JSON array instead of a JSON object. This guarantees parsing the answers doesn't screw up their order, although it might make parsing more cumbersome.
+Also, did you notice the `fmt='array'` argument? This formats the answers as a JSON array instead of a JSON object. This guarantees parsing the answers doesn't screw up their order, although it might make parsing more cumbersome.
 
 
 #### Plain Text
-If you want plan on piping the results of a questionnaire to a shell script, you might want plain text instead of JSON. Just pass `fmt='plain'` when you print the answers to your `Questionnaire`. The answers will be printed to stdout as plain text, one answer per line.
+If you want plan on piping the results of a questionnaire to a shell script, you might want plain text instead of JSON. Just pass `fmt='plain'` when you format the answers to your `Questionnaire`. The answers will be returned as plain text, one answer per line.
 
 ![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/activities_client.gif)
 
 - - -
 
 Here's another example. This one handles raw input. First, add a question using the `raw` prompter.
+
 ~~~py
 from questionnaire import Questionnaire
 q = Questionnaire()
@@ -96,6 +96,7 @@ q.add_question('age', prompter='raw', prompt='How old are you?', type=int)
 ~~~
 
 Now you can ask users about their plans for the future, based on how old they are.
+
 ~~~py
 # youngsters (age <= 18)
 q.add_question('plans', prompt='Where do you want to go to school?',
@@ -129,7 +130,7 @@ The core prompters are currently `single`, `multiple`, and `raw`. The first two 
 
 __questionnaire__ is easy to extend. Write a prompter function that satisfies the prompter API, and instead of passing a string to `add_question` to look up one of the core prompters, pass your prompter function.
 
-__The prompter API is simple__: a prompter is a function that should display a question and capture user input. It must return a `(answer, back)` tuple. If `back` is an integer, this many answers will be deleted from the questionnaire. Check out the [core prompters](questionnaire/prompters.py) for examples on how to write prompter functions.
+__The prompter API is simple__: a prompter is a function that should display a question and capture user input. It must return a `(answer, back)` tuple. Back should be `None` unless the user moved back. If your prompter returns __1__ for `back`, one answer is deleted from the questionnaire, and the user moves one question back. Check out the [core prompters](questionnaire/prompters.py) for examples on how to write prompter functions.
 
 
 ### Multiple Options

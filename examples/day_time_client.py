@@ -5,4 +5,5 @@ q.add_question('day', prompt='What day is it?', options=['monday', 'friday', 'sa
 q.add_question('time', prompt='What time is it?', options=['morning', 'night'],
                verbose_options=['in the morning', 'at night'])
 
-answers = q.run()
+q.run()
+print(q.format_answers())

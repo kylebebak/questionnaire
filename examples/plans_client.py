@@ -13,4 +13,5 @@ q.add_question('plans', prompt="Where do you want to vacation?", options=['El Ca
 # old folks (more than 60 years old)
 q.add_question('plans', prompt="Where do you want to retire?", options=['El campo', 'The beach', 'San Miguel de Allende'])
 
-answers = q.run()
+q.run()
+print(q.answers)
