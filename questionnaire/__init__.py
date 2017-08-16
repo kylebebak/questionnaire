@@ -103,23 +103,11 @@ class Questionnaire:
     the questionnaire. Additional keyword args are passed to the prompter
     method when it is called.
     """
-    def __init__(self, show_answers=True, out_type='obj'):
+    def __init__(self, show_answers=True, can_go_back=True):
         self.questions = OrderedDict()  # key -> list of Question instances
         self.answers = OrderedDict()  # key -> answer
-        self._show_answers = show_answers
-        out_types = ('obj', 'array', 'plain')
-        if out_type not in out_types:
-            eprint("Error: '{}' not in {}".format(out_type, out_types))
-            sys.exit()
-        self.out_type = out_type
-
-    def show_answers(self, s=""):
-        """Helper method for displaying the answers so far.
-        """
-        padding = len(max(self.questions.keys(), key=len)) + 5
-        for key in list(self.answers.keys()):
-            s += "{:>{}} : {}\n".format(key, padding, self.answers[key])
-        return s
+        self.show_answers = show_answers
+        self.can_go_back = can_go_back
 
     def add_question(self, *args, **kwargs):
         """Add a Question instance to the questions dict. Each key points
@@ -134,64 +122,46 @@ class Questionnaire:
         self.questions.setdefault(question.key, []).append(question)
         return question
 
-    @exit_on_keyboard_interrupt
     def run(self):
-        """Prompt the user to answer each question in the questionnaire, then
-        print the answers to stdout and return them.
+        """Asks all remaining questions in the questionnaire, returns the answers.
         """
-        self.answers = OrderedDict()  # reset answers
+        while not self.done:
+            self.ask_question()
+        return self.answers
 
-        def stringify(val):
-            if type(val) in (list, tuple):
-                return ', '.join(str(e) for e in val)
-            return val
-
-        while True:
-            if not self.ask_questions():
-                continue
-            if self.out_type == 'obj':
-                print(json.dumps(self.answers))  # print answers to stdout, and return them
-            elif self.out_type == 'array':
-                answers = [[k, v] for k, v in self.answers.items()]
-                print(json.dumps(answers))
-            elif self.out_type == 'plain':
-                answers = '\n'.join('{}: {}'.format(k, stringify(v)) for k, v in self.answers.items())
-                print(answers)
-            return self.answers
-
-    def ask_questions(self):
-        """Helper that asks questions in questionnaire, and returns
-        False if user "goes back".
+    @exit_on_keyboard_interrupt
+    def ask_question(self):
+        """Asks the next question in the questionnaire and returns the answer,
+        unless user goes back.
         """
-        for key in self.questions.keys():
-            question = self.which_question(key)
-            if question is not None and key not in self.answers:
-                if not self.ask_question(question):
-                    return False
-        return True
+        q = self.next_question
+        if q is None:
+            return
 
-    def ask_question(self, q):
-        """Call the question's prompter, and check to see if user goes back.
-        """
         prompt = q.prompt
-        if self._show_answers:
-            prompt = self.show_answers() + "\n{}".format(q.prompt)
+        if self.show_answers:
+            prompt = self.answer_display() + "\n{}".format(q.prompt)
 
-        self.answers[q.key], back = q.prompter(prompt, **q.prompter_args)
+        answer, back = q.prompter(prompt, **q.prompter_args)
         if back is None:
-            return True
-        self.go_back(abs(back))
-        return False
+            self.answers[q.key] = answer
+            return answer
+        if self.can_go_back:
+            self.go_back(abs(back))
 
-    def which_question(self, key):
-        """Decide which Question instance to select from the list of questions
-        corresponding to the key, based on condition. Returns first question
-        for which condition is satisfied, or for which there is no condition.
+    @property
+    def next_question(self):
+        """Returns the next `Question` in the questionnaire, or `None` if there
+        are no questions left. Returns first question for whose key there is no
+        answer and for which condition is satisfied, or for which there is no
+        condition.
         """
-        questions = self.questions[key]
-        for question in questions:
-            if self.check_condition(question.condition):
-                return question
+        for key, questions in self.questions.items():
+            if key in self.answers:
+                continue
+            for question in questions:
+                if self.check_condition(question.condition):
+                    return question
         return None
 
     def check_condition(self, condition):
@@ -205,8 +175,45 @@ class Questionnaire:
         return True
 
     def go_back(self, n=1):
-        """Move `n` questions back in the questionnaire, and remove
-        the last `n` answers.
+        """Move `n` questions back in the questionnaire by removing the last `n`
+        answers.
         """
-        N = max(len(self.answers)-n-1, 0)
+        N = max(len(self.answers)-n, 0)
         self.answers = OrderedDict(islice(self.answers.items(), N))
+
+    @property
+    def done(self):
+        return self.next_question is None
+
+    def reset(self):
+        self.answers = OrderedDict()
+
+    def format_answers(self, fmt='obj'):
+        """Formats answers depending on `fmt`.
+        """
+        fmts = ('obj', 'array', 'plain')
+        if fmt not in fmts:
+            eprint("Error: '{}' not in {}".format(fmt, fmts))
+            return
+
+        def stringify(val):
+            if type(val) in (list, tuple):
+                return ', '.join(str(e) for e in val)
+            return val
+
+        if fmt == 'obj':
+            return json.dumps(self.answers)  # print answers to stdout, and return them
+        elif fmt == 'array':
+            answers = [[k, v] for k, v in self.answers.items()]
+            return json.dumps(answers)
+        elif fmt == 'plain':
+            answers = '\n'.join('{}: {}'.format(k, stringify(v)) for k, v in self.answers.items())
+            return answers
+
+    def answer_display(self, s=""):
+        """Helper method for displaying the answers so far.
+        """
+        padding = len(max(self.questions.keys(), key=len)) + 5
+        for key in list(self.answers.keys()):
+            s += "{:>{}} : {}\n".format(key, padding, self.answers[key])
+        return s

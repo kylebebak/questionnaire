@@ -2,13 +2,15 @@
 
 ![License](https://camo.githubusercontent.com/890acbdcb87868b382af9a4b1fac507b9659d9bf/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d4d49542d626c75652e737667)
 
-__questionnaire__ is a mini-DSL for writing command line questionnaires! It prompts a user to answer a series of questions and returns the answers.
+__questionnaire__ is a mini-DSL for writing command line questionnaires. It prompts a user to answer a series of questions and returns the answers.
 
 __questionnaire__ is simple and powerful. Some features: 
 
-- Prints answers as JSON (or as plain text) to stdout
-  + Pipe questionnaire answers to other programs and parse them easily
+- Print answers as JSON (or as plain text) to stdout
+  + Pipe answers to other programs and parse them easily
 - Allows users to go back and reanswer questions
+- Run entire questionnaire, or ask questions one at a time
+  + Modify questionnaire as it's being run
 - Supports conditional questions (questions can depend on previous answers)
 - Supports the following types of questions: raw input, choose one, choose many
 - No mandatory coupling between question presentation and answer values
@@ -17,15 +19,15 @@ __questionnaire__ is simple and powerful. Some features:
 ## Installation
 __questionnaire__ is written in Python. The best way to install it is with `pip`.
 
-```sh
+~~~sh
 pip install questionnaire
-```
+~~~
 
 
 ## Usage
 Paste the following into a file and save it. Let's assume you save it as `questions.py`. Now go the command line and run `python questions.py`.
 
-```py
+~~~py
 # questions.py
 from questionnaire import Questionnaire
 q = Questionnaire()
@@ -34,8 +36,9 @@ q.add_question('day', prompt='What day is it?', options=['monday', 'friday', 'sa
 q.add_question('time', prompt='What time is it?', options=['morning', 'night'],
                verbose_options=['in the morning', 'at night'])
 
-answers = q.run()
-```
+q.run()
+print(q.answers)
+~~~
 
 What's happening here? We instantiate a questionnaire with `q = Questionnaire()`, add two questions to it, and run the questionnaire. At the end the answers are dumped to stdout as JSON.
 
@@ -45,10 +48,10 @@ See those optional `verbose_options`? The presentation of your questionnaire can
 ### Getting Fancy
 Add a group of conditional questions to the questionnaire above. Only one of these questions will be asked, depending on the answers to the first two questions. Run the questionnaire with `python questions.py`, and inspect the answers as well.
 
-```py
+~~~py
 # questions.py
 from questionnaire import Questionnaire
-q = Questionnaire(out_type='array')
+q = Questionnaire()
 
 q.add_question('day', options=['monday', 'friday', 'saturday'])
 q.add_question('time', options=['morning', 'night'])
@@ -67,51 +70,50 @@ q.add_question('activities', prompter='multiple',
     options=['eat granola', 'get dressed', 'go to work']).\
     add_condition(keys=['time'], vals=['morning'])
 
-answers = q.run()
-print()
-for q, a in answers.items():
-    print(q, a)
-```
+q.run()
+print(q.format_answers(fmt='array'))
+~~~
 
 As you can see, the answers are always printed to stdout, but they're also returned as an ordered dictionary (a Python `OrderedDict` to be exact).
 
 What does this mean? If you don't want to write Python code, you can write a standalone questionnaire that just pipes its answers to another program for handling. If you want to handle them in the same script, you get back a nice `OrderedDict` with all the answers!
 
-Also, did you notice the `out_type='array'` argument? This prints the answers as a JSON array instead of a JSON object. This guarantees parsing the answers doesn't screw up their order, although it might make parsing more cumbersome.
+Also, did you notice the `fmt='array'` argument? This prints the answers as a JSON array instead of a JSON object. This guarantees parsing the answers doesn't screw up their order, although it might make parsing more cumbersome.
 
 
 #### Plain Text
-If you want plan on piping the results of a questionnaire to a shell script, you might want plain text instead of JSON. Just pass `out_type='plain'` when you instantiate your `Questionnaire`. The answers will be printed to stdout as plain text, one answer per line.
+If you want plan on piping the results of a questionnaire to a shell script, you might want plain text instead of JSON. Just pass `fmt='plain'` when you print the answers to your `Questionnaire`. The answers will be printed to stdout as plain text, one answer per line.
 
 ![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/activities_client.gif)
 
 - - -
 
 Here's another example. This one handles raw input. First, add a question using the `raw` prompter.
-```py
+~~~py
 from questionnaire import Questionnaire
 q = Questionnaire()
-q.add_question('age', prompter="raw", prompt='How old are you?', type=int)
-```
+q.add_question('age', prompter='raw', prompt='How old are you?', type=int)
+~~~
 
 Now you can ask users about their plans for the future, based on how old they are.
-```py
+~~~py
 # youngsters (age <= 18)
-q.add_question('plans', prompt="Where do you want to go to school?",
+q.add_question('plans', prompt='Where do you want to go to school?',
     options=['Valley College', 'La Escuela de Calor']).\
     add_condition(keys=['age'], vals=[18], operators=['<='])
-q.add_question('plans', prompt="Where do you want to work?",
+q.add_question('plans', prompt='Where do you want to work?',
     options=['On a farm', 'In an office', 'On the couch']).\
     add_condition(keys=['age'], vals=[40], operators=['<='])
-q.add_question('plans', prompt="Where do you want to vacation?",
+q.add_question('plans', prompt='Where do you want to vacation?',
     options=['El Caribe', 'On a cruise ship', 'Las Islas Canarias']).\
     add_condition(keys=['age'], vals=[60], operators=['<='])
 # old folks (more than 60 years old)
-q.add_question('plans', prompt="Where do you want to retire?",
+q.add_question('plans', prompt='Where do you want to retire?',
     options=['El campo', 'The beach', 'San Miguel de Allende'])
 
-answers = q.run()
-```
+q.run()
+print(q.format_answers(fmt='array'))
+~~~
 
 ![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/plans_client.gif)
 
@@ -125,15 +127,17 @@ The core prompters are currently `single`, `multiple`, and `raw`. The first two 
 
 `single` is the default prompter. It requires the user to pick one of the options from the options list. `multiple` allows users to pick [multiple options](#multiple-options) for a single question, while `raw` handles [raw input](#raw-input) with basic type checking.
 
-__questionnaire__ is easy to extend. Write a prompter function that satisfies the prompter API, and instead of passing a string to `add_question` to look up one of the core prompters, pass your prompter function. Check out the [core prompters](questionnaire/prompters.py) for examples on how to write prompter functions.
+__questionnaire__ is easy to extend. Write a prompter function that satisfies the prompter API, and instead of passing a string to `add_question` to look up one of the core prompters, pass your prompter function.
+
+__The prompter API is simple__: a prompter is a function that should display a question and capture user input. It must return a `(answer, back)` tuple. If `back` is an integer, this many answers will be deleted from the questionnaire. Check out the [core prompters](questionnaire/prompters.py) for examples on how to write prompter functions.
 
 
 ### Multiple Options
-If you want to allow the user to pick multiple options for a single question, pass `prompter="multiple"` and a list of `options` to `add_question`. The `questionnaire` will add the chosen options to the `answers` dict as a list. As with the default `single` prompter, users can use <kbd>&larr;</kbd> or <kbd>h</kbd> to go back.
+If you want to allow the user to pick multiple options for a single question, pass `prompter='multiple'` and a list of `options` to `add_question`. The `questionnaire` will add the chosen options to the `answers` dict as a list. As with the default `single` prompter, users can use <kbd>&larr;</kbd> or <kbd>h</kbd> to go back.
 
 
 ### Raw Input
-For raw input, pass `prompter="raw"` and a `type` (`str`, `int`, `float`, ...) to `add_question`. The default type is `str`. By default, the user can go back from a raw input question by entering `<` as the answer. To change this, pass your own `go_back` string to `add_question`.
+For raw input, pass `prompter='raw'` and a `type` (`str`, `int`, `float`, ...) to `add_question`. The default type is `str`. By default, the user can go back from a raw input question by entering `<` as the answer. To change this, pass your own `go_back` string to `add_question`.
 
 
 ## Conditional Questions
@@ -147,7 +151,14 @@ Each item in the `keys` list must be a key for a previously answered question in
 
 
 ### Condition Operators
-The default operator is __equals__. The following operators can be passed as strings: `==`, `!=`, `<`, `>`, `<=`, `>=`, and their corresponding operator functions are looked up. If you want to define your own operators, make sure they are functions that accept two values and return a boolean. Hint: use lambda functions.
+The default operator is __equals__. The following operators can be passed as strings: `==`, `!=`, `<`, `>`, `<=`, `>=`, and their corresponding operator functions are looked up. If you want to define your own operators, make sure they are functions that accept two values and return a boolean.
+
+
+## Questionnaire Options
+Passed to a questionnaire when you instantiate it. You can also change these properties directly on the questionnaire instance while it's running.
+
+- `show_answers`: show all previous answers above question prompt
+- `can_go_back`: allow users to go back
 
 
 ## Tests

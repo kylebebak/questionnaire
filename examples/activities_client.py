@@ -1,6 +1,6 @@
 from questionnaire import Questionnaire
 
-q = Questionnaire(out_type='array')
+q = Questionnaire()
 q.add_question('day', options=['monday', 'friday', 'saturday'])
 q.add_question('time', options=['morning', 'night'])
 
@@ -11,4 +11,5 @@ q.add_question('activities', prompter='multiple', options=['barbacoa', 'footy', 
 # other mornings
 q.add_question('activities', prompter='multiple', options=['eat granola', 'get dressed', 'go to work']).add_condition(keys=['time'], vals=['morning'])
 
-answers = q.run()
+q.run()
+print(q.format_answers(fmt='array'))
