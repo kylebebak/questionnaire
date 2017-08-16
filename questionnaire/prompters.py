@@ -10,6 +10,7 @@ from __future__ import print_function
 import sys
 import curses
 import os
+import getpass
 from contextlib import contextmanager
 
 from pick import Picker
@@ -107,7 +108,9 @@ def raw(prompt="", **kwargs):
     with stdout_redirected(sys.stderr):
         while True:
             try:
-                if sys.version_info < (3, 0):
+                if kwargs.get('secret', False):
+                    answer = getpass.getpass(prompt)
+                elif sys.version_info < (3, 0):
                     answer = raw_input(prompt)
                 else:
                     answer = input(prompt)

@@ -139,6 +139,8 @@ If you want to allow the user to pick multiple options for a single question, pa
 ### Raw Input
 For raw input, pass `prompter='raw'` and a `type` (`str`, `int`, `float`, ...) to `add_question`. The default type is `str`. By default, the user can go back from a raw input question by entering `<` as the answer. To change this, pass your own `go_back` string to `add_question`.
 
+If you want to capture password input, or any other secret input, pass the `secret=True` arg to `add_question`.
+
 
 ## Conditional Questions
 __questionnaire__'s coolest feature is including questions conditionally based on previous answers. The API for conditional questions is simple and flexible.
