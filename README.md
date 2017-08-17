@@ -10,7 +10,7 @@ __questionnaire__ is simple and powerful. Some features:
   + Pipe answers to other programs and parse them easily
 - Allow users to reanswer questions
 - Run all remaining questions or ask them one at a time
-  + [Extend questionnaire as it's being run](#login-to-github)
+  + [Extend questionnaire as it's being run](#github-api)
 - Conditional questions can depend on previous answers
 - __choose one__, __choose many__, and __raw input__ questions
 - Transform and validate answers
@@ -86,38 +86,33 @@ If you plan on piping the results of a questionnaire to a shell script, you migh
 
 ![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/activities_client.gif)
 
-- - -
 
-Here's another example. This one handles raw input. First, add a question using the `raw` prompter.
+### GitHub API
+Here's another example. This one handles raw input. It first prompts the user for their GitHub __username__ and __password__. It then pauses the questionnaire and uses these credentials to hit the GitHub API to get a list of all their repos. It then adds another question to the questionnaire and resumes it, prompting the user to choose one of these repos.
+
+It depends on the `requests` library, so install it if you want to give it a try. First, add a question using the `raw` prompter.
 
 ~~~py
 from questionnaire import Questionnaire
-q = Questionnaire()
-q.add_question('age', prompter='raw', prompt='How old are you?', type=int)
-~~~
+import requests
 
-Now you can ask users about their plans for the future, based on how old they are.
-
-~~~py
-# youngsters (age <= 18)
-q.add_question('plans', prompt='Where do you want to go to school?',
-    options=['Valley College', 'La Escuela de Calor']).\
-    add_condition(keys=['age'], vals=[18], operators=['<='])
-q.add_question('plans', prompt='Where do you want to work?',
-    options=['On a farm', 'In an office', 'On the couch']).\
-    add_condition(keys=['age'], vals=[40], operators=['<='])
-q.add_question('plans', prompt='Where do you want to vacation?',
-    options=['El Caribe', 'On a cruise ship', 'Las Islas Canarias']).\
-    add_condition(keys=['age'], vals=[60], operators=['<='])
-# old folks (more than 60 years old)
-q.add_question('plans', prompt='Where do you want to retire?',
-    options=['El campo', 'The beach', 'San Miguel de Allende'])
+q = Questionnaire(show_answers=False, can_go_back=False)
+q.add_question('user', prompter="raw", prompt='Username:', type=str)
+q.add_question('pass', prompter="raw", prompt='Password:', type=str, secret=True)
 
 q.run()
-print(q.format_answers(fmt='array'))
-~~~
+r = requests.get('https://api.github.com/user/repos',
+                 auth=(q.answers.get('user'), q.answers.get('pass')))
+if not(r.ok):
+    print('username/password incorrect')
+    sys.exit()
 
-![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/plans_client.gif)
+repos = [repo.get('url') for repo in r.json()]
+q.add_question('repo', prompt="Choose a repo", options=repos)
+q.run()
+print(q.answers.get('repo'))
+
+~~~
 
 
 ## More Examples
