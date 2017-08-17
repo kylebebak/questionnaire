@@ -6,7 +6,7 @@ from itertools import islice
 from functools import wraps
 import json
 
-from .prompters import prompters, eprint
+from .prompters import prompters, eprint, QuestionnaireGoBack
 
 
 def exit_on_keyboard_interrupt(f):
@@ -142,12 +142,13 @@ class Questionnaire:
         if self.show_answers:
             prompt = self.answer_display() + "\n{}".format(q.prompt)
 
-        answer, back = q.prompter(prompt, **q.prompter_args)
-        if back is None:
+        try:
+            answer = q.prompter(prompt, **q.prompter_args)
+        except QuestionnaireGoBack as e:
+            self.go_back(e.args[0] if e.args else 1)
+        else:
             self.answers[q.key] = answer
             return answer
-        if self.can_go_back:
-            self.go_back(abs(back))
 
     @property
     def next_question(self):
@@ -178,7 +179,9 @@ class Questionnaire:
         """Move `n` questions back in the questionnaire by removing the last `n`
         answers.
         """
-        N = max(len(self.answers)-n, 0)
+        if not self.can_go_back:
+            return
+        N = max(len(self.answers)-abs(n), 0)
         self.answers = OrderedDict(islice(self.answers.items(), N))
 
     @property
@@ -202,7 +205,7 @@ class Questionnaire:
             return val
 
         if fmt == 'obj':
-            return json.dumps(self.answers)  # print answers to stdout, and return them
+            return json.dumps(self.answers)
         elif fmt == 'array':
             answers = [[k, v] for k, v in self.answers.items()]
             return json.dumps(answers)

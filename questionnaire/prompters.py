@@ -19,6 +19,10 @@ from pick import Picker
 prompters = {}
 
 
+class QuestionnaireGoBack(Exception):
+    """Signals user went back instead of answering question."""
+
+
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
@@ -49,10 +53,11 @@ def single(prompt="", **kwargs):
     with stdout_redirected(sys.stderr):
         option, index = picker.start()
         if index == -1:
-            return None, -1
-        if kwargs.get('return_index', False):  # `single` was called by a special client, e.g. `multiple`
-            return options[index], index
-        return options[index], None
+            raise QuestionnaireGoBack
+        if kwargs.get('return_index', False):
+            # `single` was called by a special client, e.g. `multiple`
+            return index
+        return options[index]
 
 
 @register(key="multiple")
@@ -74,15 +79,22 @@ def multiple(prompt="", **kwargs):
     options_ = []
     verbose_options_ = []
     while True:
-        option, index = single(
-            '{}{}'.format(prompt, verbose_options_), options=verbose_options, return_index=True
-        )
-        if index < 0:  # user went back
-            return (options_, 0) if options_ else (options_, -1)
+        try:
+            index = single(
+                '{}{}'.format(prompt, verbose_options_),
+                options=verbose_options,
+                return_index=True
+            )
+        except QuestionnaireGoBack:
+            if options_:
+                raise QuestionnaireGoBack(0)
+            else:
+                raise QuestionnaireGoBack
+        option = options[index]
         if ALL and option == ALL:
-            return ([ALL], None)
+            return [ALL]
         if option == DONE:
-            return (options_, None)
+            return options_
         options_.append(options[index])
         options.pop(index)
         verbose_options_.append(option)
@@ -114,9 +126,12 @@ def raw(prompt="", **kwargs):
                     answer = raw_input(prompt)
                 else:
                     answer = input(prompt)
-                return (answer, -1) if answer == go_back else (type_(answer), None)
+
+                if answer == go_back:
+                    raise QuestionnaireGoBack
+                return type_(answer)
             except ValueError:
-                print("\n`{}` is not a valid `{}`\n".format(answer, type_))
+                eprint("\n`{}` is not a valid `{}`\n".format(answer, type_))
 
 
 @contextmanager

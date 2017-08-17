@@ -6,15 +6,16 @@ __questionnaire__ is a mini-DSL for writing command line questionnaires. It prom
 
 __questionnaire__ is simple and powerful. Some features: 
 
-- Print answers as JSON (or as plain text) to stdout
+- Print answers as JSON or as plain text to stdout
   + Pipe answers to other programs and parse them easily
-- Optionally allow users to go back and reanswer questions
-- Run entire questionnaire, or ask questions one at a time
-  + Modify questionnaire as it's being run
-  + Run other code midway through questionnaire, then resume questionnaire
-- Supports conditional questions (questions can depend on previous answers)
-- Supports the following types of questions: __raw input__, __choose one__, __choose many__
-- No mandatory coupling between question presentation and answer values
+- Allow users to reanswer questions
+- Run all remaining questions or ask them one at a time
+  + [Extend questionnaire as it's being run](#login-to-github)
+- Conditional questions can depend on previous answers
+- __choose one__, __choose many__, and __raw input__ questions
+- Transform and validate answers
+- Question display decoupled from answer values
+- Extend questionnaire by writing your own prompter
 
 
 ## Installation
@@ -81,7 +82,7 @@ Also, did you notice the `fmt='array'` argument? This formats the answers as a J
 
 
 #### Plain Text
-If you want plan on piping the results of a questionnaire to a shell script, you might want plain text instead of JSON. Just pass `fmt='plain'` when you format the answers to your `Questionnaire`. The answers will be returned as plain text, one answer per line.
+If you plan on piping the results of a questionnaire to a shell script, you might want plain text instead of JSON. Just pass `fmt='plain'` when you format the answers to your `Questionnaire`. The answers will be returned as plain text, one answer per line.
 
 ![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/activities_client.gif)
 
@@ -124,13 +125,9 @@ Check out clients in the `examples` directory. The [Ansible client](examples/ans
 
 
 ## Prompters
-The core prompters are currently `single`, `multiple`, and `raw`. The first two depend on the excellent [pick](https://github.com/wong2/pick) package. All three are used in the usage examples above.
+The core prompters are currently `single`, `multiple`, `raw`. The first two depend on the excellent [pick](https://github.com/wong2/pick) package. All three are used in the usage examples above.
 
 `single` is the default prompter. It requires the user to pick one of the options from the options list. `multiple` allows users to pick [multiple options](#multiple-options) for a single question, while `raw` handles [raw input](#raw-input) with basic type checking.
-
-__questionnaire__ is easy to extend. Write a prompter function that satisfies the prompter API, and instead of passing a string to `add_question` to look up one of the core prompters, pass your prompter function.
-
-__The prompter API is simple__: a prompter is a function that should display a question and capture user input. It must return a `(answer, back)` tuple. Back should be `None` unless the user moved back. If your prompter returns __1__ for `back`, one answer is deleted from the questionnaire, and the user moves one question back. Check out the [core prompters](questionnaire/prompters.py) for examples on how to write prompter functions.
 
 
 ### Multiple Options
@@ -162,6 +159,18 @@ Passed to a questionnaire when you instantiate it. You can also change these pro
 
 - `show_answers`: show all previous answers above question prompt
 - `can_go_back`: allow users to go back
+
+
+## Writing Your Own Prompters
+__questionnaire__ is easy to extend. Write a prompter function that satisfies the prompter API. When you add a question to your questionnaire, instead of passing a string to `add_question` to look up one of the core prompters, pass your prompter function.
+
+__The prompter API is super simple__: a prompter is a function that should display a question and capture user input. It returns this input as an `answer`.
+
+
+### Going Back
+If you want your prompter to allow users to go back, simply raise a `QuestionnaireGoBack` exception in the body of your prompter function instead of returning the answer. This exception can imported like so: `from questionnaire.prompters import QuestionnaireGoBack`. 
+
+When you raise this exception in your prompter, you can pass the __number of steps to go back__ into the exception's constructor. For example, `raise QuestionnaireGoBack(2)` will go back two questions. If no value is passed to the constructor, the user goes back one question.
 
 
 ## Tests
