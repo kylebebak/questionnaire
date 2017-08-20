@@ -1,12 +1,16 @@
 import operator
 import inspect
 import sys
-from collections import OrderedDict
+from collections import namedtuple, OrderedDict
 from itertools import islice
 from functools import wraps
 import json
 
+
 from .prompters import prompters, eprint, QuestionnaireGoBack
+
+
+Cond = namedtuple('Cond', 'key, value, operator')
 
 
 def exit_on_keyboard_interrupt(f):
@@ -37,30 +41,28 @@ class Condition:
         '>=': operator.ge,
     }
 
-    def __init__(self, keys=[], vals=[], operators=[]):
-        self.keys = list(keys)
-        self.vals = list(vals)
-        self.operators = list(operators) if operators else ['==']*len(self.keys)
+    def __init__(self, *args):
+        self.conditions = []
+        for condition in args:
+            if len(condition) == 2:
+                condition = list(condition) + '=='
+            key, value, operator = condition
+            self.conditions.append(Cond(key, value, self.get_operator(operator)))
 
-        vars = [self.keys, self.vals, self.operators]
-        assert all(type(var) == list for var in vars), 'All condition properties must be lists'
-        assert all(len(var) == len(vars[0]) for var in vars), 'All condition properties must have the same length'
-        self.assign_operators()
-
-    def assign_operators(self):
+    def get_operator(self, op):
         """Assigns function to the operators property of the instance.
         """
-        for i, op in enumerate(self.operators):
-            if op in Condition.OPERATORS:
-                self.operators[i] = Condition.OPERATORS[op]
-                continue
-            try:
-                n_args = len(inspect.getargspec(op)[0])
-                return n_args == 2
-            except:
-                eprint('Error: Condition has invalid operator(s). Operators must '
-                       'accept two args. Hint: to define your own, use lamdbas')
-                raise
+        if op in Condition.OPERATORS:
+            return Condition.operators.get(op)
+        try:
+            n_args = len(inspect.getargspec(op)[0])
+            if n_args != 2:
+                raise TypeError
+        except:
+            eprint('Error: invalid operator function. Operators must accept two args.')
+            raise
+        else:
+            return op
 
 
 class Question:
