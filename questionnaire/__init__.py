@@ -45,7 +45,7 @@ class Condition:
         self.conditions = []
         for condition in args:
             if len(condition) == 2:
-                condition = list(condition) + '=='
+                condition = list(condition) + ['==']
             key, value, operator = condition
             self.conditions.append(Cond(key, value, self.get_operator(operator)))
 
@@ -53,7 +53,7 @@ class Condition:
         """Assigns function to the operators property of the instance.
         """
         if op in Condition.OPERATORS:
-            return Condition.operators.get(op)
+            return Condition.OPERATORS.get(op)
         try:
             n_args = len(inspect.getargspec(op)[0])
             if n_args != 2:
@@ -72,9 +72,9 @@ class Question:
     """
     def __init__(self, key, *args, **kwargs):
         self.key = key
-        self.condition = None
-        self.assign_prompter(**kwargs.pop('prompter'))  # `prompter` required
-        self.assign_prompt(**kwargs.pop('prompt', None))  # `prompt` optional
+        self._condition = None
+        self.assign_prompter(kwargs.pop('prompter'))  # `prompter` required
+        self.assign_prompt(kwargs.pop('prompt', None))  # `prompt` optional
         self.prompter_args = args
         self.prompter_kwargs = kwargs
 
@@ -94,15 +94,15 @@ class Question:
         self.prompt = prompt.strip() + ' ' if prompt else '{}: '.format(self.key)
 
     def condition(self, *args):
-        self.condition = Condition(*args)
+        self._condition = Condition(*args)
         return self
 
     def validate(self, f):
-        self.validate = f
+        self._validate = f
         return self
 
     def transform(self, f):
-        self.transform = f
+        self._transform = f
         return self
 
 
@@ -169,7 +169,7 @@ class Questionnaire:
             prompt = self.answer_display() + '\n{}'.format(q.prompt)
 
         try:
-            answer = q.prompter(prompt, *q.prompter_args)
+            answer = q.prompter(prompt, *q.prompter_args, **q.prompter_kwargs)
         except QuestionnaireGoBack as e:
             self.go_back(e.args[0] if e.args else 1)
         else:
@@ -187,7 +187,7 @@ class Questionnaire:
             if key in self.answers:
                 continue
             for question in questions:
-                if self.check_condition(question.condition):
+                if self.check_condition(question._condition):
                     return question
         return None
 

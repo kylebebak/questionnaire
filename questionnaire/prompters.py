@@ -83,11 +83,7 @@ def many(prompt, *args, **kwargs):
     verbose_options_ = []
     while True:
         try:
-            index = one(
-                '{}{}'.format(prompt, verbose_options_),
-                options=verbose_options,
-                return_index=True
-            )
+            index = one('{}{}'.format(prompt, verbose_options_), *verbose_options, return_index=True)
         except QuestionnaireGoBack:
             if options_:
                 raise QuestionnaireGoBack(0)

@@ -6,8 +6,7 @@ q.raw('user', prompt='Username:')
 q.raw('pass', prompt='Password:', secret=True)
 
 q.run()
-r = requests.get('https://api.github.com/user/repos',
-                 auth=(q.answers.get('user'), q.answers.get('pass')))
+r = requests.get('https://api.github.com/user/repos', auth=(q.answers.get('user'), q.answers.get('pass')))
 if not(r.ok):
     import sys
     print('username/password incorrect')
