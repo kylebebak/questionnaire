@@ -2,8 +2,8 @@
 (prompt, *args, **kwargs), and must return an answer. If a back event occurs, the
 prompter should raise `QuestionnaireGoBack`.
 
-Extending questionnaire is as simple writing your own prompter and passing
-it to `add_question`.
+Extending questionnaire is as simple writing your own prompter and passing it to
+`add`.
 """
 from __future__ import print_function
 import sys

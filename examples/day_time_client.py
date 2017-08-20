@@ -1,9 +1,8 @@
 from questionnaire import Questionnaire
 q = Questionnaire()
 
-q.add_question('day', prompt='What day is it?', options=['monday', 'friday', 'saturday'])
-q.add_question('time', prompt='What time is it?', options=['morning', 'night'],
-               verbose_options=['in the morning', 'at night'])
+q.one('day', 'monday', 'friday', 'saturday', prompt='What day is it?')
+q.one('time', ('morning', 'in the morning'), ('night', 'at night'), prompt='What time is it?')
 
 q.run()
 print(q.format_answers())

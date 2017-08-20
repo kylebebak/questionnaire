@@ -196,8 +196,9 @@ class Questionnaire:
         """
         if not condition:
             return True
-        for key, val, op in zip(condition.keys, condition.vals, condition.operators):
-            if not op(self.answers[key], val):
+        for c in condition.conditions:
+            key, value, operator = c
+            if not operator(self.answers[key], value):
                 return False
         return True
 

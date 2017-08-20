@@ -94,6 +94,7 @@ q.run()
 r = requests.get('https://api.github.com/user/repos',
                  auth=(q.answers.get('user'), q.answers.get('pass')))
 if not(r.ok):
+    import sys
     print('username/password incorrect')
     sys.exit()
 
@@ -106,7 +107,7 @@ print(q.answers.get('repo'))
 
 
 ## More Examples
-Check out clients in the `examples` directory. The [Ansible client](examples/ansible_client.py) generates an answers dict that you pass to another program to build up an `ansible-playbook` command for administering servers. I do this almost every day at work.
+Check out clients in the `examples` directory.
 
 
 ## Prompters
