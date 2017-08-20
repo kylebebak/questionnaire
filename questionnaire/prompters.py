@@ -1,7 +1,6 @@
-"""All prompters registered in this module must have a function signature
-of (prompt="", **kwargs), and must return an (answer, back) tuple, even if
-a back event doesn't occur. If the value for back is an int, the
-questionnaire will go back that number of questions.
+"""All prompters registered in this module must have a function signature of
+(prompt, *args, **kwargs), and must return an answer. If a back event occurs, the
+prompter should raise `QuestionnaireGoBack`.
 
 Extending questionnaire is as simple writing your own prompter and passing
 it to `add_question`.
@@ -27,7 +26,13 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
-def register(key="function"):
+def is_string(thing):
+    if sys.version_info < (3, 0):
+        return isinstance(thing, basestring)
+    return isinstance(thing, str)
+
+
+def register(key='function'):
     """Add decorated functions to prompters dict.
     """
     def decorate(func):
@@ -36,16 +41,15 @@ def register(key="function"):
     return decorate
 
 
-@register(key="single")
-def single(prompt="", **kwargs):
+@register(key='one')
+def one(prompt, *args, **kwargs):
     """Instantiates a picker, registers custom handlers for going back,
     and starts the picker.
     """
     def go_back(picker):
         return None, -1
 
-    options = kwargs.get('options', [])
-    verbose_options = prepare_verbose_options(options, kwargs.get('verbose_options', None))
+    options, verbose_options = prepare_options(args)
 
     picker = Picker(verbose_options, title=prompt, indicator='=>')
     picker.register_custom_handler(ord('h'), go_back)
@@ -55,20 +59,19 @@ def single(prompt="", **kwargs):
         if index == -1:
             raise QuestionnaireGoBack
         if kwargs.get('return_index', False):
-            # `single` was called by a special client, e.g. `multiple`
+            # `one` was called by a special client, e.g. `many`
             return index
         return options[index]
 
 
-@register(key="multiple")
-def multiple(prompt="", **kwargs):
-    """Calls `pick` in a while loop to allow user to pick multiple
+@register(key='many')
+def many(prompt, *args, **kwargs):
+    """Calls `pick` in a while loop to allow user to pick many
     options. Returns a list of chosen options.
     """
-    ALL = kwargs.get('all', 'all')
+    ALL = kwargs.get('all', None)
     DONE = kwargs.get('done', 'done...')
-    options = kwargs.get('options', [])
-    verbose_options = prepare_verbose_options(options, kwargs.get('verbose_options', None))
+    options, verbose_options = prepare_options(args)
 
     options = options + [DONE]
     verbose_options = verbose_options + [DONE]
@@ -80,7 +83,7 @@ def multiple(prompt="", **kwargs):
     verbose_options_ = []
     while True:
         try:
-            index = single(
+            index = one(
                 '{}{}'.format(prompt, verbose_options_),
                 options=verbose_options,
                 return_index=True
@@ -101,17 +104,23 @@ def multiple(prompt="", **kwargs):
         verbose_options.pop(index)
 
 
-def prepare_verbose_options(options, verbose_options):
-    if verbose_options is None:
-        verbose_options = list(options)
-    if not len(options) == len(verbose_options):
-        eprint('Errors: `options` must have the same length as `verbose_options`')
-        sys.exit()
-    return verbose_options
+def prepare_options(options):
+    """Create options and verbose options from strings and non-string iterables in
+    `options` array.
+    """
+    options_, verbose_options = [], []
+    for option in options:
+        if is_string(option):
+            options_.append(option)
+            verbose_options.append(option)
+        else:
+            options_.append(option[0])
+            verbose_options.append(option[1])
+    return options_, verbose_options
 
 
-@register(key="raw")
-def raw(prompt="", **kwargs):
+@register(key='raw')
+def raw(prompt, *args, **kwargs):
     """Calls input to allow user to input an arbitrary string. User can go
     back by entering the `go_back` string. Works in both Python 2 and 3.
     """
@@ -131,7 +140,7 @@ def raw(prompt="", **kwargs):
                     raise QuestionnaireGoBack
                 return type_(answer)
             except ValueError:
-                eprint("\n`{}` is not a valid `{}`\n".format(answer, type_))
+                eprint('\n`{}` is not a valid `{}`\n'.format(answer, type_))
 
 
 @contextmanager
@@ -164,5 +173,5 @@ def stdout_redirected(to):
 def fileno(file_or_fd):
     fd = getattr(file_or_fd, 'fileno', lambda: file_or_fd)()
     if not isinstance(fd, int):
-        raise ValueError("Expected a file (`.fileno()`) or a file descriptor")
+        raise ValueError('Expected a file (`.fileno()`) or a file descriptor')
     return fd

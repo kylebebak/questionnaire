@@ -43,10 +43,8 @@ class Condition:
         self.operators = list(operators) if operators else ['==']*len(self.keys)
 
         vars = [self.keys, self.vals, self.operators]
-        assert all(type(var) == list for var in vars), \
-            "All condition properties must be lists"
-        assert all(len(var) == len(vars[0]) for var in vars), \
-            "All condition properties must have the same length"
+        assert all(type(var) == list for var in vars), 'All condition properties must be lists'
+        assert all(len(var) == len(vars[0]) for var in vars), 'All condition properties must have the same length'
         self.assign_operators()
 
     def assign_operators(self):
@@ -60,8 +58,8 @@ class Condition:
                 n_args = len(inspect.getargspec(op)[0])
                 return n_args == 2
             except:
-                eprint("Error: Condition has invalid operator(s). Operators must "
-                       "accept two args. Hint: to define your own, use lamdbas")
+                eprint('Error: Condition has invalid operator(s). Operators must '
+                       'accept two args. Hint: to define your own, use lamdbas')
                 raise
 
 
@@ -70,12 +68,13 @@ class Question:
     prompter in the core prompters registry, or you can pass your own
     prompter method that conforms to the prompter API.
     """
-    def __init__(self, key, prompter="single", prompt="", **prompter_args):
+    def __init__(self, key, *args, **kwargs):
         self.key = key
         self.condition = None
-        self.assign_prompter(prompter)
-        self.assign_prompt(prompt)
-        self.prompter_args = prompter_args
+        self.assign_prompter(**kwargs.pop('prompter'))  # `prompter` required
+        self.assign_prompt(**kwargs.pop('prompt', None))  # `prompt` optional
+        self.prompter_args = args
+        self.prompter_kwargs = kwargs
 
     def assign_prompter(self, prompter):
         """If you want to change the core prompters registry, you can
@@ -90,12 +89,19 @@ class Question:
             self.prompter = prompter
 
     def assign_prompt(self, prompt):
-        self.prompt = prompt.strip() + " " if prompt else "{}: ".format(self.key)
+        self.prompt = prompt.strip() + ' ' if prompt else '{}: '.format(self.key)
 
-    def add_condition(self, **kwargs):
-        if 'keys' in kwargs and 'vals' in kwargs:
-            self.condition = Condition(**kwargs)
-        return self.condition
+    def condition(self, *args):
+        self.condition = Condition(*args)
+        return self
+
+    def validate(self, f):
+        self.validate = f
+        return self
+
+    def transform(self, f):
+        self.transform = f
+        return self
 
 
 class Questionnaire:
@@ -109,28 +115,46 @@ class Questionnaire:
         self.show_answers = show_answers
         self.can_go_back = can_go_back
 
-    def add_question(self, *args, **kwargs):
+    def add(self, *args, **kwargs):
         """Add a Question instance to the questions dict. Each key points
         to a list of Question instances with that key. Use the `question`
         kwarg to pass a Question instance if you want, or pass in the same
         args you would pass to instantiate a question.
         """
-        if "question" in kwargs and isinstance(kwargs["question"], Question):
-            question = kwargs["question"]
+        if 'question' in kwargs and isinstance(kwargs['question'], Question):
+            question = kwargs['question']
         else:
             question = Question(*args, **kwargs)
         self.questions.setdefault(question.key, []).append(question)
         return question
 
+    def one(self, *args, **kwargs):
+        kwargs['prompter'] = 'one'
+        return self.add(*args, **kwargs)
+
+    def many(self, *args, **kwargs):
+        kwargs['prompter'] = 'many'
+        return self.add(*args, **kwargs)
+
+    def raw(self, *args, **kwargs):
+        kwargs['prompter'] = 'raw'
+        return self.add(*args, **kwargs)
+
+    def remove(self, key):
+        """Remove all questions associated with `key`. Raises exception if `key`
+        doesn't exist.
+        """
+        return self.questions.pop(key)
+
     def run(self):
         """Asks all remaining questions in the questionnaire, returns the answers.
         """
         while not self.done:
-            self.ask_question()
+            self.ask()
         return self.answers
 
     @exit_on_keyboard_interrupt
-    def ask_question(self):
+    def ask(self):
         """Asks the next question in the questionnaire and returns the answer,
         unless user goes back.
         """
@@ -140,10 +164,10 @@ class Questionnaire:
 
         prompt = q.prompt
         if self.show_answers:
-            prompt = self.answer_display() + "\n{}".format(q.prompt)
+            prompt = self.answer_display() + '\n{}'.format(q.prompt)
 
         try:
-            answer = q.prompter(prompt, **q.prompter_args)
+            answer = q.prompter(prompt, *q.prompter_args)
         except QuestionnaireGoBack as e:
             self.go_back(e.args[0] if e.args else 1)
         else:
@@ -213,10 +237,10 @@ class Questionnaire:
             answers = '\n'.join('{}: {}'.format(k, stringify(v)) for k, v in self.answers.items())
             return answers
 
-    def answer_display(self, s=""):
+    def answer_display(self, s=''):
         """Helper method for displaying the answers so far.
         """
         padding = len(max(self.questions.keys(), key=len)) + 5
         for key in list(self.answers.keys()):
-            s += "{:>{}} : {}\n".format(key, padding, self.answers[key])
+            s += '{:>{}} : {}\n'.format(key, padding, self.answers[key])
         return s
