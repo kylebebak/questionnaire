@@ -73,6 +73,8 @@ class Question:
     def __init__(self, key, *args, **kwargs):
         self.key = key
         self._condition = None
+        self._validate = None
+        self._transform = None
         self.assign_prompter(kwargs.pop('prompter'))  # `prompter` required
         self.assign_prompt(kwargs.pop('prompt', None))  # `prompt` optional
         self.prompter_args = args
@@ -156,7 +158,7 @@ class Questionnaire:
         return self.answers
 
     @exit_on_keyboard_interrupt
-    def ask(self):
+    def ask(self, error=None):
         """Asks the next question in the questionnaire and returns the answer,
         unless user goes back.
         """
@@ -164,17 +166,33 @@ class Questionnaire:
         if q is None:
             return
 
-        prompt = q.prompt
-        if self.show_answers:
-            prompt = self.answer_display() + '\n{}'.format(q.prompt)
-
         try:
-            answer = q.prompter(prompt, *q.prompter_args, **q.prompter_kwargs)
+            answer = q.prompter(self.get_prompt(q, error), *q.prompter_args, **q.prompter_kwargs)
         except QuestionnaireGoBack as e:
-            self.go_back(e.args[0] if e.args else 1)
+            steps = e.args[0] if e.args else 1
+            if steps == 0:
+                self.ask()  # user can redo current question even if `can_go_back` is `False`
+                return
+            self.go_back(steps)
         else:
+            if q._validate:
+                error = q._validate(answer)
+                if error:
+                    self.ask(error)
+                    return
+            if q._transform:
+                answer = q._transform(answer)
             self.answers[q.key] = answer
             return answer
+
+    def get_prompt(self, question, error=None):
+        parts = []
+        if self.show_answers:
+            parts.append(self.answer_display())
+        if error:
+            parts.append(error)
+        parts.append(question.prompt)
+        return '\n\n'.join(str(p) for p in parts)
 
     @property
     def next_question(self):

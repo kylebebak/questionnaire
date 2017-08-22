@@ -11,7 +11,7 @@ __questionnaire__ is simple and powerful. Some features:
 - Powerful and flexible
   + Conditional questions can depend on previous answers
   + Allow users to reanswer questions
-  + Transform and validate answers
+  + Validate and transform answers
   + Question presentation decoupled from answer values
   + Run all remaining questions or ask them one at a time
     * [Extend questionnaire as it's being run](#github-api)
@@ -68,7 +68,7 @@ print(q.format_answers(fmt='array'))
 
 ![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/activities_client.gif)
 
-As you can see, it's easy to print answers to stdout. In keeping with the [UNIX philosophy](https://en.wikipedia.org/wiki/Unix_philosophy), __Questionnaire is compososable__. If you don't want to write Python code, you can write a standalone questionnaire that pipes its answers to another program for handling. If you want to handle them in the same script, just reference `q.answers`, which is a nice `OrderedDict`.
+As you can see, it's easy to print answers to stdout. In keeping with the [UNIX philosophy](https://en.wikipedia.org/wiki/Unix_philosophy), __Questionnaire is composable__. If you don't want to write Python code, you can write a standalone questionnaire that pipes its answers to another program for handling. If you want to handle them in the same script, just reference `q.answers`, which is a nice `OrderedDict`.
 
 Also, did you notice the `fmt='array'` argument? This formats the answers as a JSON array instead of a JSON object. This guarantees parsing the answers doesn't screw up their order, although it might make parsing more cumbersome.
 
@@ -127,6 +127,39 @@ For raw input, invoke `questionnaire.raw`. Optionally pass a `type` (`int`, `flo
 If you want to capture password input, or any other secret input, pass `secret=True`.
 
 
+## Validating and Transforming Answers
+__questionnaire__ makes validating and transforming answers a cinch. For validation, you chain a call to `validate` onto a question and pass a validation function. When the user answers, the validation function receives one argument (the answer).
+
+If there's anything wrong with the answer, the function __should return a string explaining what's wrong__. The explanation is shown to the user when he submits an invalid answer. If there's nothing wrong with the answer, the function shouldn't return anything.
+
+_Transforming_ answers is very similar. Chain a call to `transform` onto a question and pass a transform function. This function receives the answer as an argument. It should do something with it and return a transformed answer. The transformed answer is the one that will actually be saved in the questionnaire. See how you can use __questionnaire__ to help your users sign up for junk mail.
+
+~~~py
+from questionnaire import Questionnaire
+q = Questionnaire(can_go_back=False)
+
+def email(email):
+    import re
+    if not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+        return 'Enter a valid email'
+
+def one(options):
+    if len(options) < 1:
+        return 'You must choose at least 1 type of junk mail'
+
+def join(options):
+    return ', '.join(options)
+
+q.raw('email').validate(email)
+q.many('junk_mail', 'this one weird trick', 'cheap viagra', 'dermatologists hate her').validate(one).transform(join)
+
+q.run()
+print(q.answers)
+~~~
+
+If a question has both a `transform` and `validate` function, validation is performed on the answer __before__ the transform is applied.
+
+
 ## Conditional Questions
 One of __questionnaire__'s coolest features is including questions conditionally based on previous answers. The API for conditional questions is simple and flexible.
 
@@ -167,7 +200,7 @@ If you've forked __questionnaire__ and want to make sure it's not broken, the mo
 
 
 ## Contributing
-If you want to improve __questionnaire__ with tests, new core prompters, or other features, fork the repo and submit a pull request. Automated tests or new prompters would be nice!
+If you want to improve __questionnaire__, fork the repo and submit a pull request. Integration tests for the prompters would be nice. I think it would also be nice to refactor the raw prompter to use curses.
 
 
 ## Gotchas

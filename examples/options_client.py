@@ -1,14 +1,23 @@
 from questionnaire import Questionnaire
 q = Questionnaire()
 
-q.many('options', 'Option 1', 'Option 2', prompt='Choose some options')
-q.many('more', 'Option 3', 'Option 4', prompt='Choose some more')
+
+def two(options):
+    if len(options) < 2:
+        return 'You must choose at least 2 options'
+
+def join(options):
+    return ', '.join(options)
+
+q.many('options', 'Option 1', 'Option 2', 'Option 3', prompt='Choose some options').validate(two).transform(join)
+q.many('more', 'Option 4', 'Option 5', 'Option 6', prompt='Choose some more').validate(two).transform(join)
 
 q.run()
 print(q.answers)
 
-q.many('yet_more', 'Option 5', 'Option 6', prompt='And more...')
-q.many('done', 'Option 7', 'Option 8', prompt='Last ones')
+
+q.many('yet_more', 'Option 7', 'Option 8', prompt='And more...')
+q.many('done', 'Option 9', 'Option 10', prompt='Last ones')
 
 q.run()
 print(q.answers)
