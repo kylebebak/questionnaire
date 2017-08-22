@@ -1,20 +1,19 @@
 # questionnaire
 
 ![License](https://camo.githubusercontent.com/890acbdcb87868b382af9a4b1fac507b9659d9bf/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d4d49542d626c75652e737667)
+[![PyPI version](https://badge.fury.io/py/questionnaire.svg)](https://badge.fury.io/py/questionnaire)
 
 __questionnaire__ is a mini-DSL for writing command line questionnaires. It prompts a user to answer a series of questions and returns the answers.
 
-__questionnaire__ is simple and powerful. Some features: 
-
+## Features
 - Compact, intuitive syntax
 - Composable: pipe answers to other programs as JSON or plain text
-- Powerful and flexible
+- Flexible
   + Conditional questions can depend on previous answers
   + Allow users to reanswer questions
   + Validate and transform answers
   + Question presentation decoupled from answer values
-  + Run all remaining questions or ask them one at a time
-    * [Extend questionnaire as it's being run](#github-api)
+  + [Extend questionnaire as it's being run](#github-api)
 - __choose one__, __choose many__, and __raw input__ prompters built in
   + Extend questionnaire by writing your own prompter
 
@@ -47,7 +46,7 @@ What's happening here? We instantiate a questionnaire with `q = Questionnaire()`
 Look at the second question with the __"time"__ key. We pass tuples for our options instead of strings. The first value in these tuples is the answer value stored by the questionnaire, and the second value is the option presented to the user. In other words, the presentation of your questionnaire __can be decoupled from the answers it returns__.
 
 
-### Getting Fancy
+## Getting Fancy
 Add a group of conditional questions to the questionnaire above. Only one of these questions will be asked, depending on the answers to the first two questions. Run the questionnaire with `python questions.py`, and inspect the answers as well.
 
 ~~~py
@@ -58,22 +57,22 @@ q = Questionnaire()
 q.one('day', 'monday', 'friday', 'saturday')
 q.one('time', 'morning', 'night')
 
-q.many('activities', 'eat tacos de pastor', 'go to the cantina', 'do some programming').condition(('time', 'night'))
-q.many('activities', 'eat barbacoa', 'watch footy', 'walk the dog').condition(('day', 'saturday'), ('time', 'morning'))
+q.many('activities', 'tacos de pastor', 'go to cantina', 'write code').condition(('time', 'night'))
+q.many('activities', 'barbacoa', 'watch footy', 'walk dog').condition(('day', 'saturday'), ('time', 'morning'))
 q.many('activities', 'eat granola', 'get dressed', 'go to work').condition(('time', 'morning'))
 
 q.run()
 print(q.format_answers(fmt='array'))
 ~~~
 
-![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/activities_client.gif)
+![](https://raw.githubusercontent.com/kylebebak/questionnaire/master/examples/activities.gif)
 
-As you can see, it's easy to print answers to stdout. In keeping with the [UNIX philosophy](https://en.wikipedia.org/wiki/Unix_philosophy), __Questionnaire is composable__. If you don't want to write Python code, you can write a standalone questionnaire that pipes its answers to another program for handling. If you want to handle them in the same script, just reference `q.answers`, which is a nice `OrderedDict`.
+As you can see, it's easy to print answers to stdout. In keeping with the [UNIX philosophy](https://en.wikipedia.org/wiki/Unix_philosophy), __Questionnaire is composable__. If you don't want to write Python code, you can write a standalone questionnaire that pipes its answers to another program for handling. If you want to handle them in the same script, just use `q.answers`, which is a nice `OrderedDict`.
 
 Also, did you notice the `fmt='array'` argument? This formats the answers as a JSON array instead of a JSON object. This guarantees parsing the answers doesn't screw up their order, although it might make parsing more cumbersome.
 
 
-#### Plain Text
+### Plain Text
 If you plan on piping the results of a questionnaire to a shell script, you might want plain text instead of JSON. Just pass `fmt='plain'` when you format the answers to your `Questionnaire`. The answers will be returned as plain text, one answer per line.
 
 
@@ -113,7 +112,7 @@ Check out clients in the `examples` directory.
 The core prompters are currently `one`, `many`, `raw`. The first two depend on the excellent [pick](https://github.com/wong2/pick) package. All three are used in the examples above.
 
 
-## One Option
+### One Option
 To require the user to pick one option from a list, invoke `questionnaire.one`. When the question is answered the chosen option is added to the `answers` dict.
 
 
@@ -128,11 +127,11 @@ If you want to capture password input, or any other secret input, pass `secret=T
 
 
 ## Validating and Transforming Answers
-__questionnaire__ makes validating and transforming answers a cinch. For validation, you chain a call to `validate` onto a question and pass a validation function. When the user answers, the validation function receives one argument (the answer).
+__questionnaire__ makes it easy to validate and transform answers. For validation, you chain a call to `validate` onto a question and pass a validation function. When the user answers, the validation function receives one argument (the answer).
 
 If there's anything wrong with the answer, the function __should return a string explaining what's wrong__. The explanation is shown to the user when he submits an invalid answer. If there's nothing wrong with the answer, the function shouldn't return anything.
 
-_Transforming_ answers is very similar. Chain a call to `transform` onto a question and pass a transform function. This function receives the answer as an argument. It should do something with it and return a transformed answer. The transformed answer is the one that will actually be saved in the questionnaire. See how you can use __questionnaire__ to help your users sign up for junk mail.
+__Transforming__ answers is very similar. Chain a call to `transform` onto a question and pass a transform function. This function receives the answer as an argument. It should do something with it and return a transformed answer. The transformed answer is the one that will actually be saved in the questionnaire. See how you can use __questionnaire__ to help your users sign up for junk mail.
 
 ~~~py
 from questionnaire import Questionnaire
@@ -161,7 +160,7 @@ If a question has both a `transform` and `validate` function, validation is perf
 
 
 ## Conditional Questions
-One of __questionnaire__'s coolest features is including questions conditionally based on previous answers. The API for conditional questions is simple and flexible.
+One of __questionnaire__'s coolest features is asking questions conditionally based on previous answers. The API for conditional questions is simple and flexible.
 
 If you add questions with the same key to a questionnaire, the conditions assigned to the questions determine which one is presented to the user. __questionnaire__ iterates through the questions in the order they were added, __and presents the first question whose condition is satisfied, or whose condition is None__. If none of the questions for a key has a condition that is satisfied, all questions for this key are skipped.
 
@@ -196,7 +195,7 @@ When you raise this exception in your prompter, you can pass the __number of ste
 
 
 ## Tests
-If you've forked __questionnaire__ and want to make sure it's not broken, the modules in the `examples` directory should be used to test it. Run, for example, `python -m examples.plans_client` or `python -m examples.activities_client` from the root of the repo.
+If you've forked __questionnaire__ and want to make sure it's not broken, the modules in the `examples` directory should be used to test it. Run, for example, `python -m examples.plans` or `python -m examples.activities` from the root of the repo.
 
 
 ## Contributing
