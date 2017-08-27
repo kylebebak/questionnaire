@@ -1,3 +1,4 @@
+ # -*- coding: utf-8 -*-
 import operator
 import inspect
 import sys
@@ -7,7 +8,7 @@ from functools import wraps
 import json
 
 
-from .prompters import prompters, eprint, QuestionnaireGoBack
+from .prompters import prompters, eprint, QuestionnaireGoBack, is_string
 
 
 Cond = namedtuple('Cond', 'key, value, operator')
@@ -52,8 +53,8 @@ class Condition:
     def get_operator(self, op):
         """Assigns function to the operators property of the instance.
         """
-        if op in Condition.OPERATORS:
-            return Condition.OPERATORS.get(op)
+        if op in self.OPERATORS:
+            return self.OPERATORS.get(op)
         try:
             n_args = len(inspect.getargspec(op)[0])
             if n_args != 2:
@@ -84,7 +85,7 @@ class Question:
         """If you want to change the core prompters registry, you can
         override this method in a Question subclass.
         """
-        if type(prompter) is str:
+        if is_string(prompter):
             if prompter not in prompters:
                 eprint("Error: '{}' is not a core prompter".format(prompter))
                 sys.exit()

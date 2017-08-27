@@ -2,6 +2,7 @@
 
 ![License](https://camo.githubusercontent.com/890acbdcb87868b382af9a4b1fac507b9659d9bf/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d4d49542d626c75652e737667)
 [![PyPI version](https://badge.fury.io/py/questionnaire.svg)](https://badge.fury.io/py/questionnaire)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bbfaa8c291834d049fac889cfdd06f4a)](https://www.codacy.com/app/kylebebak/questionnaire?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=kylebebak/questionnaire&amp;utm_campaign=Badge_Grade)
 
 __questionnaire__ is a mini-DSL for writing command line questionnaires. It prompts a user to answer a series of questions and returns the answers.
 

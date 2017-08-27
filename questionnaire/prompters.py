@@ -1,3 +1,4 @@
+ # -*- coding: utf-8 -*-
 """All prompters registered in this module must have a function signature of
 (prompt, *args, **kwargs), and must return an answer. If a back event occurs, the
 prompter should raise `QuestionnaireGoBack`.
@@ -46,12 +47,16 @@ def one(prompt, *args, **kwargs):
     """Instantiates a picker, registers custom handlers for going back,
     and starts the picker.
     """
+    indicator = '‣'
+    if sys.version_info < (3, 0):
+        indicator = '>'
     def go_back(picker):
         return None, -1
 
     options, verbose_options = prepare_options(args)
+    idx = kwargs.get('idx', 0)
 
-    picker = Picker(verbose_options, title=prompt, indicator='=>')
+    picker = Picker(verbose_options, title=prompt, indicator=indicator, default_index=idx)
     picker.register_custom_handler(ord('h'), go_back)
     picker.register_custom_handler(curses.KEY_LEFT, go_back)
     with stdout_redirected(sys.stderr):
@@ -69,35 +74,33 @@ def many(prompt, *args, **kwargs):
     """Calls `pick` in a while loop to allow user to pick many
     options. Returns a list of chosen options.
     """
-    ALL = kwargs.get('all', None)
-    DONE = kwargs.get('done', 'done...')
+    def get_options(options, chosen):
+        return [options[i] for i, c in enumerate(chosen) if c]
+
+    def get_verbose_options(verbose_options, chosen):
+        no, yes = ' ', '✔'
+        if sys.version_info < (3, 3):
+            no, yes = ' ', '@'
+        opts = ['{} {}'.format(yes if c else no, verbose_options[i]) for i, c in enumerate(chosen)]
+        return opts + ['{}{}'.format('  ', kwargs.get('done', 'done...'))]
+
     options, verbose_options = prepare_options(args)
+    chosen = [False] * len(options)
+    index = 0
 
-    options = options + [DONE]
-    verbose_options = verbose_options + [DONE]
-    if ALL:
-        options = [ALL] + options
-        verbose_options = [ALL] + verbose_options
-
-    options_ = []
-    verbose_options_ = []
     while True:
         try:
-            index = one('{}{}'.format(prompt, verbose_options_), *verbose_options, return_index=True)
+            index = one(prompt, *get_verbose_options(verbose_options, chosen),
+                        return_index=True, idx=index)
         except QuestionnaireGoBack:
-            if options_:
+            if any(chosen):
                 raise QuestionnaireGoBack(0)
             else:
                 raise QuestionnaireGoBack
+        if index == len(options):
+            return get_options(options, chosen)
+        chosen[index] = not chosen[index]
         option = options[index]
-        if ALL and option == ALL:
-            return [ALL]
-        if option == DONE:
-            return options_
-        options_.append(options[index])
-        options.pop(index)
-        verbose_options_.append(option)
-        verbose_options.pop(index)
 
 
 def prepare_options(options):
