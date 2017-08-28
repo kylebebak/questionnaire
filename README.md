@@ -2,6 +2,8 @@
 
 ![License](https://camo.githubusercontent.com/890acbdcb87868b382af9a4b1fac507b9659d9bf/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d4d49542d626c75652e737667)
 [![PyPI version](https://badge.fury.io/py/questionnaire.svg)](https://badge.fury.io/py/questionnaire)
+[![Build Status](https://travis-ci.org/kylebebak/questionnaire.svg?branch=master)](https://travis-ci.org/kylebebak/questionnaire)
+[![Coverage Status](https://coveralls.io/repos/github/kylebebak/questionnaire/badge.svg?branch=master)](https://coveralls.io/github/kylebebak/questionnaire?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/bbfaa8c291834d049fac889cfdd06f4a)](https://www.codacy.com/app/kylebebak/questionnaire?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=kylebebak/questionnaire&amp;utm_campaign=Badge_Grade)
 
 __questionnaire__ is a mini-DSL for writing command line questionnaires. It prompts a user to answer a series of questions and returns the answers.
@@ -188,13 +190,17 @@ When you raise this exception in your prompter, you can pass the __number of ste
 
 
 ## Tests
-From the root of the repo, run `python -m unittest discover tests -v`. Tests in the `tests` directory are run automatically by Travis. These tests cover the `Questionnaire`, `Question` and `Condition` classes. They don't cover prompters, which are completely decoupled from `Questionnaire`.
+From the root of the repo, run `python -m unittest discover -v`. Tests in the `tests` directory are run automatically by Travis. These tests cover the `Questionnaire`, `Question` and `Condition` classes. They don't cover prompters, which are completely decoupled from `Questionnaire`.
 
 If you want to make sure the core prompters are working, the modules in the `examples` directory should be used to test them. Run, for example, `python -m examples.plans` or `python -m examples.activities` from the root of the repo. If anyone wants to help automate these tests that would be great!
 
 
+### Coverage
+To see coverage stats for the questionnaire package, run `coverage run --source=questionnaire -m unittest discover -v` and `coverage report`.
+
+
 ## Contributing
-If you want to improve __questionnaire__, fork the repo and submit a pull request. Integration tests for the prompters would be nice. I think it would also be nice to refactor the raw prompter to use curses. A boolean __y/n__ prompter might be nice, even though this use case is handled fine by the `one` prompter.
+If you want to improve __questionnaire__, fork the repo and submit a pull request. Integration tests for the prompters would be nice. I think it would also be nice to refactor the raw prompter to use curses. A boolean __(Y/n)__ prompter might be nice, even though this use case is handled fine by the `one` prompter.
 
 
 ## Gotchas

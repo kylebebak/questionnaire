@@ -13,6 +13,7 @@ MANIFEST
 # due to using tox and pytest
 .tox
 .cache
+.coverage
 
 # notes
 .notes.md

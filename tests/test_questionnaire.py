@@ -1,4 +1,4 @@
-"""Usage: from repo root, run `python -m unittest discover tests -v`
+"""Usage: from repo root, run `python -m unittest discover -v`
 """
 import unittest
 from random import randrange
