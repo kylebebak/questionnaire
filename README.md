@@ -48,13 +48,10 @@ Look at the second question with the __"time"__ key. We pass tuples for our opti
 
 
 ## Getting Fancy
-Add a group of conditional questions to the questionnaire above. Only one of these questions will be asked, depending on the answers to the first two questions. Run the questionnaire with `python questions.py`, and inspect the answers as well.
+Add a group of conditional questions to the questionnaire above. Only one of these questions will be asked, depending on the answers to the first two questions. Run the questionnaire and inspect the answers.
 
 ~~~py
-# questions.py
-from questionnaire import Questionnaire
 q = Questionnaire()
-
 q.one('day', 'monday', 'friday', 'saturday')
 q.one('time', 'morning', 'night')
 
@@ -83,9 +80,6 @@ Here's another example. This one handles raw input. It first prompts the user fo
 It depends on the [Requests](https://github.com/requests/requests) library, so install it if you want to give it a try. First, add a question using the `raw` prompter.
 
 ~~~py
-from questionnaire import Questionnaire
-import requests
-
 q = Questionnaire(show_answers=False, can_go_back=False)
 q.raw('user', prompt='Username:')
 q.raw('pass', prompt='Password:', secret=True)
@@ -135,7 +129,6 @@ If there's anything wrong with the answer, the function __should return a string
 __Transforming__ answers is very similar. Chain a call to `transform` onto a question and pass a transform function. This function receives the answer as an argument. It should do something with it and return a transformed answer. The transformed answer is the one that will actually be saved in the questionnaire. See how you can use __questionnaire__ to help your users sign up for junk mail.
 
 ~~~py
-from questionnaire import Questionnaire
 q = Questionnaire(can_go_back=False)
 
 def email(email):
@@ -153,8 +146,7 @@ def join(options):
 q.raw('email').validate(email)
 q.many('junk_mail', 'this one weird trick', 'cheap viagra', 'dermatologists hate her').validate(one).transform(join)
 
-q.run()
-print(q.answers)
+print(q.run())
 ~~~
 
 If a question has both a `transform` and `validate` function, validation is performed on the answer __before__ the transform is applied.
@@ -202,7 +194,7 @@ If you want to make sure the core prompters are working, the modules in the `exa
 
 
 ## Contributing
-If you want to improve __questionnaire__, fork the repo and submit a pull request. Integration tests for the prompters would be nice. I think it would also be nice to refactor the raw prompter to use curses.
+If you want to improve __questionnaire__, fork the repo and submit a pull request. Integration tests for the prompters would be nice. I think it would also be nice to refactor the raw prompter to use curses. A boolean __y/n__ prompter might be nice, even though this use case is handled fine by the `one` prompter.
 
 
 ## Gotchas
