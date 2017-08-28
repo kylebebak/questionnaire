@@ -196,7 +196,9 @@ When you raise this exception in your prompter, you can pass the __number of ste
 
 
 ## Tests
-If you've forked __questionnaire__ and want to make sure it's not broken, the modules in the `examples` directory should be used to test it. Run, for example, `python -m examples.plans` or `python -m examples.activities` from the root of the repo.
+From the root of the repo, run `python -m unittest discover tests -v`. Tests in the `tests` directory are run automatically by Travis. These tests cover the `Questionnaire`, `Question` and `Condition` classes. They don't cover prompters, which are completely decoupled from `Questionnaire`.
+
+If you want to make sure the core prompters are working, the modules in the `examples` directory should be used to test them. Run, for example, `python -m examples.plans` or `python -m examples.activities` from the root of the repo. If anyone wants to help automate these tests that would be great!
 
 
 ## Contributing
