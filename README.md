@@ -118,7 +118,7 @@ To allow the user to pick many options for a single question, invoke `questionna
 
 
 ### Raw Input
-For raw input, invoke `questionnaire.raw`. Optionally pass a `type` (`int`, `float`, ...) to coerce the answer to a given type. By default, the user can go back from a raw input question by entering `<` as the answer. To change this, pass your own `go_back` string.
+For raw input, invoke `questionnaire.raw`. Optionally pass a `type` (`int`, `float`, ...) to coerce the answer to a given type. You can also pass a `default` value to be inserted if the user does not write anything. By default, the user can go back from a raw input question by entering `<` as the answer. To change this, pass your own `go_back` string.
 
 If you want to capture password input, or any other secret input, pass `secret=True`.
 
@@ -184,7 +184,7 @@ __The prompter API is super simple__: a prompter is a function that should displ
 
 
 ### Going Back
-If you want your prompter to allow users to go back, simply raise a `QuestionnaireGoBack` exception in the body of your prompter function instead of returning the answer. This exception can imported like so: `from questionnaire.prompters import QuestionnaireGoBack`. 
+If you want your prompter to allow users to go back, simply raise a `QuestionnaireGoBack` exception in the body of your prompter function instead of returning the answer. This exception can imported like so: `from questionnaire.prompters import QuestionnaireGoBack`.
 
 When you raise this exception in your prompter, you can pass the __number of steps to go back__ into the exception's constructor. For example, `raise QuestionnaireGoBack(2)` will go back two questions. If no value is passed to the constructor, the user goes back one question.
 

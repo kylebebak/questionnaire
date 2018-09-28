@@ -77,7 +77,7 @@ class Question:
         self._validate = None
         self._transform = None
         self.assign_prompter(kwargs.pop('prompter'))  # `prompter` required
-        self.assign_prompt(kwargs.pop('prompt', None))  # `prompt` optional
+        self.assign_prompt(kwargs.pop('prompt', None), kwargs.get('default', None))  # `prompt` optional, `default` optional
         self.prompter_args = args
         self.prompter_kwargs = kwargs
 
@@ -93,8 +93,10 @@ class Question:
         else:
             self.prompter = prompter
 
-    def assign_prompt(self, prompt):
+    def assign_prompt(self, prompt, default=None):
         self.prompt = prompt.strip() + ' ' if prompt else '{}: '.format(self.key)
+        if default is not None:
+            self.prompt += '[{}] '.format(default)
 
     def condition(self, *args):
         self._condition = Condition(*args)

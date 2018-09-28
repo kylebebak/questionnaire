@@ -125,6 +125,7 @@ def raw(prompt, *args, **kwargs):
     """
     go_back = kwargs.get('go_back', '<')
     type_ = kwargs.get('type', str)
+    default = kwargs.get('default', '')
     with stdout_redirected(sys.stderr):
         while True:
             try:
@@ -134,6 +135,9 @@ def raw(prompt, *args, **kwargs):
                     answer = raw_input(prompt)
                 else:
                     answer = input(prompt)
+
+                if not answer:
+                    answer = default
 
                 if answer == go_back:
                     raise QuestionnaireGoBack
