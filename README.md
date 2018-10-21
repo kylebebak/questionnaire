@@ -8,6 +8,7 @@
 
 __questionnaire__ is a mini-DSL for writing command line questionnaires. It prompts a user to answer a series of questions and returns the answers.
 
+
 ## Features
 - Compact, intuitive syntax
 - Composable: pipe answers to other programs as JSON or plain text
@@ -110,11 +111,11 @@ The core prompters are currently `one`, `many`, `raw`. The first two depend on t
 
 
 ### One Option
-To require the user to pick one option from a list, invoke `questionnaire.one`. When the question is answered the chosen option is added to the `answers` dict.
+To require the user to pick one option from a list, invoke `questionnaire.one`. When the question is answered the chosen option is added to the `answers` dict. Pass `idx` to choose the index of the initially selected option.
 
 
 ### Many Options
-To allow the user to pick many options for a single question, invoke `questionnaire.many`. When the question is answered, the list of chosen options is added to the `answers` dict. As with the `one` prompter, users can use <kbd>&larr;</kbd> or <kbd>h</kbd> to go back.
+To allow the user to pick many options for a single question, invoke `questionnaire.many`. When the question is answered, the list of chosen options is added to the `answers` dict. As with the `one` prompter, users can use <kbd>&larr;</kbd> or <kbd>h</kbd> to go back. Pass a `default` index or list of indices to specify initially selected options.
 
 
 ### Raw Input

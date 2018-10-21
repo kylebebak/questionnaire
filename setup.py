@@ -17,5 +17,5 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
-    ]
+    ],
 )

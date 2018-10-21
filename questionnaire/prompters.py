@@ -1,4 +1,4 @@
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """All prompters registered in this module must have a function signature of
 (prompt, *args, **kwargs), and must return an answer. If a back event occurs, the
 prompter should raise `QuestionnaireGoBack`.
@@ -50,6 +50,7 @@ def one(prompt, *args, **kwargs):
     indicator = '‣'
     if sys.version_info < (3, 0):
         indicator = '>'
+
     def go_back(picker):
         return None, -1
 
@@ -86,12 +87,18 @@ def many(prompt, *args, **kwargs):
 
     options, verbose_options = prepare_options(args)
     chosen = [False] * len(options)
-    index = 0
+    index = kwargs.get('idx', 0)
+
+    default = kwargs.get('default', None)
+    if isinstance(default, list):
+        for idx in default:
+            chosen[idx] = True
+    if isinstance(default, int):
+        chosen[default] = True
 
     while True:
         try:
-            index = one(prompt, *get_verbose_options(verbose_options, chosen),
-                        return_index=True, idx=index)
+            index = one(prompt, *get_verbose_options(verbose_options, chosen), return_index=True, idx=index)
         except QuestionnaireGoBack:
             if any(chosen):
                 raise QuestionnaireGoBack(0)
@@ -100,7 +107,6 @@ def many(prompt, *args, **kwargs):
         if index == len(options):
             return get_options(options, chosen)
         chosen[index] = not chosen[index]
-        option = options[index]
 
 
 def prepare_options(options):

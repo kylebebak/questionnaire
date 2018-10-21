@@ -1,12 +1,11 @@
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import operator
 import inspect
+import json
 import sys
 from collections import namedtuple, OrderedDict
 from itertools import islice
 from functools import wraps
-import json
-
 
 from .prompters import prompters, eprint, QuestionnaireGoBack, is_string
 
@@ -77,7 +76,7 @@ class Question:
         self._validate = None
         self._transform = None
         self.assign_prompter(kwargs.pop('prompter'))  # `prompter` required
-        self.assign_prompt(kwargs.pop('prompt', None), kwargs.get('default', None))  # `prompt` optional, `default` optional
+        self.assign_prompt(kwargs.pop('prompt', None), kwargs.get('default', None))  # `prompt`, `default` optional
         self.prompter_args = args
         self.prompter_kwargs = kwargs
 
